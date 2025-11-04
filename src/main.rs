@@ -30,13 +30,15 @@ fn main() {
         .map(|(z, y)| convert_bitmask_xy(*z, *y))
         .collect();
 
+    println!("{}", id);
+
     for f_bit in f_encoded {
-        println!("{:?}", f_bit);
+        println!("{}", f_bit);
     }
     for x_bit in x_encoded {
-        println!("{:?}", x_bit);
+        println!("{}", x_bit);
     }
     for y_bit in y_encoded {
-        println!("{:?}", y_bit);
+        println!("{}", y_bit);
     }
 }
