@@ -33,12 +33,32 @@ fn main() {
     println!("{}", id);
 
     for f_bit in f_encoded {
+        println!("-----");
+
+        for f_top in f_bit.top_prefix() {
+            println!("{}", f_top);
+        }
         println!("{}", f_bit);
+
+        println!("-----");
     }
     for x_bit in x_encoded {
+        println!("-----");
+        for x_top in x_bit.top_prefix() {
+            println!("{}", x_top);
+        }
+
         println!("{}", x_bit);
+
+        println!("-----");
     }
     for y_bit in y_encoded {
+        println!("-----");
+        for y_top in y_bit.top_prefix() {
+            println!("{}", y_top);
+        }
+
         println!("{}", y_bit);
+        println!("-----");
     }
 }

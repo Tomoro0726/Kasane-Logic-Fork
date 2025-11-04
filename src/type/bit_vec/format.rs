@@ -1,3 +1,12 @@
+use core::fmt;
+
 use crate::r#type::bit_vec::BitVec;
 
-impl BitVec {}
+impl fmt::Display for BitVec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for ebit in &self.0 {
+            write!(f, "{:08b}", ebit)?;
+        }
+        Ok(())
+    }
+}
