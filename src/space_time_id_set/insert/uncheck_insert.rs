@@ -6,7 +6,7 @@ use crate::{
 };
 
 impl SpaceTimeIdSet {
-    fn uncheck_insert(&mut self, f: &BitVec, x: &BitVec, y: &BitVec) {
+    pub fn uncheck_insert(&mut self, f: &BitVec, x: &BitVec, y: &BitVec) {
         let index = self.generate_index();
 
         // 各次元に共通処理を適用

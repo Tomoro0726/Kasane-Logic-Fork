@@ -35,30 +35,29 @@ fn main() {
     for f_bit in f_encoded {
         println!("-----");
 
-        for f_top in f_bit.top_prefix() {
-            println!("{}", f_top);
-        }
-        println!("{}", f_bit);
+        println!("Start:{}", f_bit);
+        println!("End  :{}", f_bit.under_prefix());
 
-        println!("-----");
+        if f_bit == f_bit.under_prefix() {
+            println!("変化なし");
+        }
     }
     for x_bit in x_encoded {
         println!("-----");
-        for x_top in x_bit.top_prefix() {
-            println!("{}", x_top);
+        println!("Start:{}", x_bit);
+        println!("End  :{}", x_bit.under_prefix());
+
+        if x_bit == x_bit.under_prefix() {
+            println!("変化なし");
         }
-
-        println!("{}", x_bit);
-
-        println!("-----");
     }
     for y_bit in y_encoded {
         println!("-----");
-        for y_top in y_bit.top_prefix() {
-            println!("{}", y_top);
-        }
+        println!("Start:{}", y_bit);
+        println!("End  :{}", y_bit.under_prefix());
 
-        println!("{}", y_bit);
-        println!("-----");
+        if y_bit == y_bit.under_prefix() {
+            println!("変化なし");
+        }
     }
 }

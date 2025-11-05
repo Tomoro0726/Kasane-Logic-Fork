@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use crate::{
     space_time_id_set::{Index, LayerInfo, SpaceTimeIdSet},
-    r#type::bit_vec::{self, BitVec},
+    r#type::bit_vec::BitVec,
 };
 
 pub enum MainDimensionSelect {
@@ -11,7 +11,68 @@ pub enum MainDimensionSelect {
     Y,
 }
 
+struct DimensionRefs<'a> {
+    main: &'a BTreeMap<BitVec, LayerInfo>,
+    others: [&'a BTreeMap<BitVec, LayerInfo>; 2],
+}
+
 impl SpaceTimeIdSet {
+    /// 対応する次元をまとめて返す構造体
+
+    /// メイン次元とその他の次元の参照を選択
+    fn select_dimensions(&self, dim: &MainDimensionSelect) -> DimensionRefs<'_> {
+        match dim {
+            MainDimensionSelect::F => DimensionRefs {
+                main: &self.f,
+                others: [&self.x, &self.y],
+            },
+            MainDimensionSelect::X => DimensionRefs {
+                main: &self.x,
+                others: [&self.f, &self.y],
+            },
+            MainDimensionSelect::Y => DimensionRefs {
+                main: &self.y,
+                others: [&self.x, &self.f],
+            },
+        }
+    }
+
+    /// 指定された BitVec の上位層インデックスを集める
+    fn collect_top_indices(map: &BTreeMap<BitVec, LayerInfo>, key: &BitVec) -> HashSet<Index> {
+        let mut result = HashSet::new();
+        for top in key.top_prefix() {
+            if let Some(v) = map.get(&top) {
+                result.extend(v.index.iter().copied());
+            }
+        }
+        result
+    }
+
+    /// 他次元との組み合わせで uncheck_insert を呼ぶ
+    fn insert_combinations(
+        &mut self,
+        dim_sel: &MainDimensionSelect,
+        main: &BitVec,
+        others: &[&Vec<(usize, BitVec)>; 2],
+    ) {
+        // 他次元が少なくとも2つの要素を持つかチェック
+        if others.len() != 2 {
+            return;
+        }
+
+        // 組み合わせを生成して挿入
+        for (_, b1) in &*others[0] {
+            for (_, b2) in &*others[1] {
+                match dim_sel {
+                    MainDimensionSelect::F => self.uncheck_insert(main, b1, b2),
+                    MainDimensionSelect::X => self.uncheck_insert(b1, main, b2),
+                    MainDimensionSelect::Y => self.uncheck_insert(b1, b2, main),
+                }
+            }
+        }
+    }
+
+    /// 元の tmp 処理（簡潔化）
     pub fn tmp(
         &mut self,
         main_under_count: &usize,
@@ -19,53 +80,21 @@ impl SpaceTimeIdSet {
         main_encoded: &mut Vec<(usize, BitVec)>,
         main_index: &usize,
         other_encoded: &[&Vec<(usize, BitVec)>; 2],
-        main_dimension_select: MainDimensionSelect,
+        main_sel: MainDimensionSelect,
     ) {
-        //代表次元とそれ以外の参照を置く
-        let main_dim;
-        let other_dim;
+        let dims = self.select_dimensions(&main_sel);
 
-        match main_dimension_select {
-            MainDimensionSelect::F => {
-                main_dim = &self.f;
-                other_dim = [&self.x, &self.y];
-            }
-            MainDimensionSelect::X => {
-                main_dim = &self.x;
-                other_dim = [&self.f, &self.y];
-            }
-            MainDimensionSelect::Y => {
-                main_dim = &self.y;
-                other_dim = [&self.x, &self.f];
+        // 上位を収集
+        let main_top = Self::collect_top_indices(dims.main, main);
+
+        // 上位も下位も0の場合の処理
+        if main_top.is_empty() && *main_under_count == 0 {
+            if *main_index < main_encoded.len() {
+                let _removed = main_encoded.remove(*main_index);
+                self.insert_combinations(&main_sel, main, other_encoded);
             }
         }
 
-        //まず上位の範囲を検索(同位を含む)
-        let mut main_top: HashSet<Index> = HashSet::new();
-
-        for top in main.top_prefix() {
-            match main_dim.get(&top) {
-                Some(v) => main_top.extend(v.index.clone()),
-                None => {}
-            }
-        }
-
-        //上位も下位も0の場合
-        if main_top.len() == 0 && *main_under_count == 0 {
-            //encodedの配列から代表次元を削除し、取り出す
-            let removed = main_encoded.remove(*main_index);
-
-            //他の次元と組み合わせて挿入する
-            while let Some(dim1) = other_encoded.first() {
-                while let Some(dim2) = other_encoded.first() {
-                    let index = self.generate_index();
-                }
-            }
-        }
-
-        //下位の範囲を検索する
-        let mut main_under: HashSet<Index> = HashSet::new();
-
-        //必要な場合は検索
+        // 下位探索（今後拡張予定）
     }
 }
