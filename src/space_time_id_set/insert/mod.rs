@@ -1,5 +1,3 @@
-use std::os::windows::prelude;
-
 use crate::{
     space_time_id::SpaceTimeId,
     space_time_id_set::{
@@ -20,6 +18,7 @@ pub mod insert_main_dim;
 pub mod scan_and_insert_top;
 pub mod search_under_count;
 pub mod select_dimensions;
+pub mod split_dimension;
 pub mod uncheck_insert;
 pub mod uncheck_insert_combinations;
 
