@@ -1,11 +1,21 @@
 use crate::space_time_id_set::insert::check_relation::Relation;
 use crate::{space_time_id_set::SpaceTimeIdSet, r#type::bit_vec::BitVec};
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum MainDimensionSelect {
     F,
     X,
     Y,
+}
+
+impl MainDimensionSelect {
+    pub fn as_index(&self) -> usize {
+        match self {
+            MainDimensionSelect::F => 0,
+            MainDimensionSelect::X => 1,
+            MainDimensionSelect::Y => 2,
+        }
+    }
 }
 
 pub struct DimRelation {
@@ -38,26 +48,28 @@ impl SpaceTimeIdSet {
             return;
         }
 
+        //main_topから検索して処理していく
+        match self.scan_and_insert_top(
+            main_bit,
+            &main_top,
+            other_encoded,
+            main_dim_select,
+            main_under_count,
+        ) {
+            super::scan_and_insert_top::ResultTop::End => {
+                //この階層はここで終了でよい
+                main_encoded.remove(*main_index);
+                return;
+            }
+            super::scan_and_insert_top::ResultTop::Continue => {
+                //処理を続行する
+            }
+        };
+
         //代表次元における下位範囲を収拾する
         let main_under = self.collect_under(main_bit, &main_dim_select);
 
         //逆引きをして範囲を照合
-
-        //main_topから検索
-        for index in main_top {
-            let revese = match self.reverse.get(&index) {
-                Some(v) => v,
-                None => {
-                    continue;
-                }
-            };
-
-            match main_dim_select {
-                MainDimensionSelect::F => {}
-                MainDimensionSelect::X => todo!(),
-                MainDimensionSelect::Y => todo!(),
-            }
-        }
 
         //------------------------------------------
 

@@ -9,7 +9,7 @@ use crate::{
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Relation {
     Top,
-    Bottom,
+    Under,
     Disjoint,
 }
 
@@ -21,7 +21,7 @@ impl SpaceTimeIdSet {
         } else if (me < target) && (target < &me.under_prefix()) {
             return Relation::Top;
         } else if (target < me) && (me < &target.under_prefix()) {
-            return Relation::Bottom;
+            return Relation::Under;
         } else {
             return Relation::Disjoint;
         }

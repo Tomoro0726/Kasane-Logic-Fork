@@ -11,22 +11,15 @@ use crate::{
     r#type::bit_vec::BitVec,
 };
 
-pub enum ResultTop {
-    ///上位のIDに含まれるため、これ以上やる必要がない
-    End,
-
-    ///上位のIDに含まれなかった、下位のIDも調べる必要がある
-    Continue,
-}
 impl SpaceTimeIdSet {
-    pub fn scan_and_insert_top(
+    pub fn scan_and_insert_under(
         &mut self,
         main_bit: &BitVec,
-        main_top: &HashSet<Index>,
+        main_under: &HashSet<Index>,
         other_encoded: &[&Vec<(usize, BitVec)>; 2],
         main_dim_select: MainDimensionSelect,
         main_under_count: &usize,
-    ) -> ResultTop {
+    ) {
         // コピーは破壊的操作用
         let mut other_encoded_copy = other_encoded.map(|v| (*v).clone());
 
@@ -39,7 +32,7 @@ impl SpaceTimeIdSet {
             _ => unreachable!(),
         };
 
-        for index in main_top {
+        for index in main_under {
             let reverse = self.reverse.get(index).unwrap();
             let target_bits = [&reverse.f.clone(), &reverse.x.clone(), &reverse.y.clone()];
             let mut target_main = target_bits[main_idx].clone();
@@ -85,23 +78,13 @@ impl SpaceTimeIdSet {
             // ---- メイン軸を含めた結合処理 ----
             for (ai, a_rel) in &a_relations {
                 for (bi, b_rel) in &b_relations {
-                    //全てが上位の場合
-                    if (*a_rel == Relation::Top) && (*b_rel == Relation::Top) {
-                        return ResultTop::End;
+                    //全てが下位の場合はそのIDを削除
+                    if (*a_rel == Relation::Under) && (*b_rel == Relation::Under) {
+                        self.uncheck_delete(index);
                     }
 
                     // メイン軸は target_main
-                    if *a_rel == Relation::Top {
-                        let split_b = Self::split_dimension(
-                            target_b,
-                            &mut other_encoded_copy[1][*bi].1.clone(),
-                        );
-                        for bit_b in split_b {
-                            self.uncheck_insert(main_bit, &other_encoded_copy[0][*ai].1, &bit_b);
-                        }
-                    }
-
-                    if *b_rel == Relation::Top {
+                    if (*a_rel == Relation::Top) && (*b_rel == Relation::Under) {
                         let split_a = Self::split_dimension(
                             target_a,
                             &mut other_encoded_copy[0][*ai].1.clone(),
@@ -111,20 +94,27 @@ impl SpaceTimeIdSet {
                         }
                     }
 
-                    // main軸を分割挿入
-                    for bit_main in Self::split_dimension(main_bit, &mut target_main) {
-                        self.insert_main_dim(
-                            &bit_main,
-                            &0,
-                            main_under_count,
-                            &mut vec![(main_under_count.clone(), main_bit.clone())],
-                            other_encoded,
-                            main_dim_select.clone(),
+                    if (*a_rel == Relation::Under) && (*b_rel == Relation::Top) {
+                        let split_b = Self::split_dimension(
+                            target_b,
+                            &mut other_encoded_copy[1][*bi].1.clone(),
                         );
+                        for bit_b in split_b {
+                            self.uncheck_insert(main_bit, &other_encoded_copy[0][*ai].1, &bit_b);
+                        }
+                    }
+
+                    //ここまだ終わってない
+
+                    // mainに突き抜けていたIDを分割
+                    for bit_main in Self::split_dimension(&target_main, &mut main_bit.clone()) {
+                        let f = &bit_main;
+                        let x = &target_a;
+                        let y = &target_b;
+                        self.uncheck_insert(f, x, y);
                     }
                 }
             }
         }
-        return ResultTop::Continue;
     }
 }

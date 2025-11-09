@@ -16,9 +16,11 @@ pub mod collect_under;
 pub mod generate_index;
 pub mod insert_main_dim;
 pub mod scan_and_insert_top;
+pub mod scan_and_insert_under;
 pub mod search_under_count;
 pub mod select_dimensions;
 pub mod split_dimension;
+pub mod uncheck_delete;
 pub mod uncheck_insert;
 pub mod uncheck_insert_combinations;
 

@@ -15,7 +15,7 @@ use kasane_logic::{
 
 fn main() {
     let top = BitVec::from_vec(vec![0b10000000]);
-    let mut under = BitVec::from_vec(vec![0b10101100]);
+    let mut under = BitVec::from_vec(vec![0b10101110]);
 
     let result = SpaceTimeIdSet::split_dimension(&top, &mut under);
 
