@@ -28,7 +28,8 @@ impl SpaceTimeIdSet {
         main_under_count: &usize,
     ) -> ResultTop {
         // コピーは破壊的操作用
-        let mut other_encoded_copy = other_encoded.map(|v| (*v).clone());
+        let mut other_encoded_copy: [Vec<Option<(usize, BitVec)>>; 2] =
+            other_encoded.map(|v| v.iter().cloned().map(Some).collect());
 
         // 軸を動的に決定
         let main_idx = main_dim_select.as_index();
@@ -54,60 +55,94 @@ impl SpaceTimeIdSet {
 
             // ---- A軸を処理 ----
             for (i, (_, bit_a)) in other_encoded[0].iter().enumerate() {
-                let relation = Self::check_relation(bit_a, target_a);
+                if let Some(a_v) = other_encoded_copy[0][i].as_mut() {
+                    println!("bit_a{}", bit_a);
+                    println!("target_a{}", target_a);
+                    let relation = Self::check_relation(bit_a, target_a);
 
-                if relation == Relation::Disjoint {
-                    let removed = other_encoded_copy[0].remove(i);
-                    for (_, bit_b) in &other_encoded_copy[1] {
-                        self.uncheck_insert(main_bit, &removed.1, bit_b);
+                    if relation == Relation::Disjoint {
+                        println!("a_disjoint");
+
+                        // 論理削除しつつ a_v を取り出す
+                        let removed = other_encoded_copy[0][i].take().unwrap();
+
+                        for b_opt in &other_encoded_copy[1] {
+                            if let Some(b_v) = b_opt.as_ref() {
+                                self.uncheck_insert(main_bit, &removed.1, &b_v.1);
+                            }
+                        }
+                    } else {
+                        a_relations.push((i, relation));
                     }
-                    continue;
                 }
-
-                a_relations.push((i, relation));
             }
 
             // ---- B軸を処理 ----
             for (i, (_, bit_b)) in other_encoded[1].iter().enumerate() {
-                let relation = Self::check_relation(bit_b, target_b);
+                if let Some(b_v) = other_encoded_copy[1][i].as_mut() {
+                    println!("bit_b{}", bit_b);
+                    println!("target_b{}", target_b);
 
-                if relation == Relation::Disjoint {
-                    let removed = other_encoded_copy[1].remove(i);
-                    for (_, bit_a) in &other_encoded_copy[0] {
-                        self.uncheck_insert(main_bit, &removed.1, bit_a);
+                    let relation = Self::check_relation(bit_b, target_b);
+
+                    if relation == Relation::Disjoint {
+                        println!("b_disjoint");
+
+                        let removed = other_encoded_copy[1][i].take().unwrap();
+
+                        for a_opt in &other_encoded_copy[0] {
+                            if let Some(a_v) = a_opt.as_ref() {
+                                println!("ここで挿入されている");
+                                self.uncheck_insert(main_bit, &a_v.1, &removed.1);
+                            }
+                        }
+                    } else {
+                        b_relations.push((i, relation));
                     }
-                    continue;
                 }
-
-                b_relations.push((i, relation));
             }
+
+            println!("a_relation:{:?}", a_relations);
+            println!("b_relation:{:?}", b_relations);
+
+            println!("{:?}", other_encoded_copy);
 
             // ---- メイン軸を含めた結合処理 ----
             for (ai, a_rel) in &a_relations {
                 for (bi, b_rel) in &b_relations {
-                    //全てが上位の場合
+                    let a_opt = &other_encoded_copy[0][*ai];
+                    let b_opt = &other_encoded_copy[1][*bi];
+
+                    // どちらかが None ならスキップ
+                    let a_v = match a_opt.as_ref() {
+                        Some(val) => val,
+                        None => continue,
+                    };
+                    let b_v = match b_opt.as_ref() {
+                        Some(val) => val,
+                        None => continue,
+                    };
+
+                    // 全てが上位の場合
                     if (*a_rel == Relation::Top) && (*b_rel == Relation::Top) {
                         return ResultTop::End;
                     }
 
-                    // メイン軸は target_main
+                    // A軸が上位の場合
                     if *a_rel == Relation::Top {
-                        let split_b = Self::split_dimension(
-                            target_b,
-                            &mut other_encoded_copy[1][*bi].1.clone(),
-                        );
+                        let mut b_clone = b_v.1.clone();
+                        let split_b = Self::split_dimension(target_b, &mut b_clone);
                         for bit_b in split_b {
-                            self.uncheck_insert(main_bit, &other_encoded_copy[0][*ai].1, &bit_b);
+                            self.uncheck_insert(main_bit, &a_v.1, &bit_b);
                         }
                     }
 
+                    // B軸が上位の場合
                     if *b_rel == Relation::Top {
-                        let split_a = Self::split_dimension(
-                            target_a,
-                            &mut other_encoded_copy[0][*ai].1.clone(),
-                        );
+                        let mut a_clone = a_v.1.clone();
+                        let split_a = Self::split_dimension(target_a, &mut a_clone);
                         for bit_a in split_a {
-                            self.uncheck_insert(main_bit, &bit_a, &other_encoded_copy[1][*bi].1);
+                            self.uncheck_insert(main_bit, &bit_a, &b_v.1);
                         }
                     }
 

@@ -1,7 +1,7 @@
 use crate::space_time_id_set::insert::check_relation::Relation;
 use crate::{space_time_id_set::SpaceTimeIdSet, r#type::bit_vec::BitVec};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum MainDimensionSelect {
     F,
     X,
@@ -35,14 +35,17 @@ impl SpaceTimeIdSet {
         other_encoded: &[&Vec<(usize, BitVec)>; 2],
         main_dim_select: MainDimensionSelect,
     ) {
+        println!("代表次元：{:?}", main_dim_select);
         //代表次元における上位範囲を収拾する
+
         let main_top = Self::collect_top(&self, main_bit, &main_dim_select);
+
+        println!("{:?}", main_top);
 
         //代表次元において、上位も下位も存在しなかった場合
         if main_top.is_empty() && *main_under_count == 0 {
             //代表次元をBitVecから削除
             let _removed = main_encoded.remove(*main_index);
-
             //挿入
             self.uncheck_insert_combinations(&main_dim_select, main_bit, other_encoded);
             return;
@@ -76,5 +79,8 @@ impl SpaceTimeIdSet {
             main_dim_select,
             main_under_count,
         );
+        main_encoded.remove(*main_index);
+
+        return;
     }
 }

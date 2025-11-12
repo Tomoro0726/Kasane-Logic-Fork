@@ -6,7 +6,7 @@ use crate::{
 };
 
 ///Me（自身）から見た視点の結果
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum Relation {
     Top,
     Under,

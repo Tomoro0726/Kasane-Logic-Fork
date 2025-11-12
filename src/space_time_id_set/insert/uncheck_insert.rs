@@ -33,7 +33,7 @@ impl SpaceTimeIdSet {
             map.entry(key_top)
                 .and_modify(|v| v.count += 1)
                 .or_insert(LayerInfo {
-                    index: HashSet::from([index]),
+                    index: HashSet::from([]),
                     count: 0,
                 });
         }

@@ -12,20 +12,10 @@ fn main() {
     )
     .unwrap();
 
-    let id2 = SpaceTimeId::new(
-        5,
-        [Some(3), Some(2)],
-        [Some(3), Some(5)],
-        [Some(3), Some(5)],
-        0,
-        [None, None],
-    )
-    .unwrap();
+    let id2 = SpaceTimeId::random_z_max(5);
 
-    set.insert(id);
     set.insert(id2);
 
-    println!("{}", id);
     println!("{}", id2);
 
     println!("-------------");
