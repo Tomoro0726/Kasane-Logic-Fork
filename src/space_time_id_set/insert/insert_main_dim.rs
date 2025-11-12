@@ -62,9 +62,16 @@ impl SpaceTimeIdSet {
         //代表次元における下位範囲を収拾する
         let main_under = self.collect_under(main_bit, &main_dim_select);
 
-        self.scan_and_insert_under(main_bit, &main_under, other_encoded, main_dim_select);
-        main_encoded.remove(*main_index);
+        if main_under.is_empty() {
+            let _removed = main_encoded.remove(*main_index);
+            //挿入
+            self.uncheck_insert_combinations(&main_dim_select, main_bit, other_encoded);
+            return;
+        } else {
+            self.scan_and_insert_under(main_bit, &main_under, other_encoded, main_dim_select);
+            main_encoded.remove(*main_index);
 
-        return;
+            return;
+        }
     }
 }

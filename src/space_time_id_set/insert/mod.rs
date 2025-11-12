@@ -26,6 +26,7 @@ pub mod uncheck_insert_combinations;
 
 impl SpaceTimeIdSet {
     pub fn insert(&mut self, id: SpaceTimeId) {
+        println!("Call Insert");
         //IDを各次元ごとに最適な単体範囲に分解する
         let f_splited = convert_f(id.z, id.f);
         let x_splited = convert_xy(id.z, id.x);
@@ -57,6 +58,10 @@ impl SpaceTimeIdSet {
         //どこかの次元がなくなるまで繰り返す
 
         while !(f_encoded.is_empty() || x_encoded.is_empty() || y_encoded.is_empty()) {
+            println!("F:{:?}", f_encoded);
+            println!("X:{:?}", x_encoded);
+            println!("Y:{:?}", y_encoded);
+
             //各次元の代表の最小のやつを求める
             let (f_index, f_under_min_val) = {
                 let (i, v) = f_encoded
