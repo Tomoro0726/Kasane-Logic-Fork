@@ -40,14 +40,13 @@ impl SpaceTimeIdSet {
         println!("================");
 
         println!("{}", main_bit);
-        println!("--------------");
 
         for index in main_top {
+            println!("--------------");
+
             let reverse = self.reverse.get(index).unwrap();
             let target_bits = [&reverse.f.clone(), &reverse.x.clone(), &reverse.y.clone()];
             let mut target_main: BitVec = target_bits[main_idx].clone();
-
-            println!("{}", target_main);
 
             // 他軸の参照を動的に取得
             let target_a = &target_bits[other_axes[0]];
@@ -62,9 +61,9 @@ impl SpaceTimeIdSet {
                 if let Some(_a_v) = other_encoded_copy[0][i].as_mut() {
                     let relation = Self::check_relation(bit_a, target_a);
 
-                    println!("{:?}", relation);
-
                     if relation == Relation::Disjoint {
+                        println!("X軸が関係ないので挿入");
+
                         // 論理削除しつつ a_v を取り出す
                         let removed = other_encoded_copy[0][i].take().unwrap();
 
@@ -84,9 +83,9 @@ impl SpaceTimeIdSet {
                 if let Some(_b_v) = other_encoded_copy[1][i].as_mut() {
                     let relation = Self::check_relation(bit_b, target_b);
 
-                    println!("{:?}", relation);
-
                     if relation == Relation::Disjoint {
+                        println!("Y軸が関係ないので挿入");
+
                         let removed = other_encoded_copy[1][i].take().unwrap();
 
                         for a_opt in &other_encoded_copy[0] {
