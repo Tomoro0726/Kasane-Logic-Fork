@@ -2,14 +2,14 @@ use crate::{
     bit_vec::BitVec,
     space_time_id_set::{
         ReverseInfo, SpaceTimeIdSet,
-        insert::{check_relation::Relation, insert_main_dim::MainDimensionSelect},
+        insert::{check_relation::Relation, insert_main_dim::DimensionSelect},
     },
 };
 
 impl SpaceTimeIdSet {
     pub fn collect_other_dimension(
         dim: &BitVec,
-        dim_select: MainDimensionSelect,
+        dim_select: DimensionSelect,
         top_reverse: &Vec<&ReverseInfo>,
         under_reverse: &Vec<&ReverseInfo>,
     ) -> Option<(Vec<Relation>, Vec<Relation>)> {
@@ -23,9 +23,9 @@ impl SpaceTimeIdSet {
 
         for top in top_reverse {
             let target = match dim_select {
-                MainDimensionSelect::F => &top.f,
-                MainDimensionSelect::X => &top.x,
-                MainDimensionSelect::Y => &top.y,
+                DimensionSelect::F => &top.f,
+                DimensionSelect::X => &top.x,
+                DimensionSelect::Y => &top.y,
             };
 
             let relation = Self::check_relation(dim, target);
@@ -39,9 +39,9 @@ impl SpaceTimeIdSet {
 
         for under in under_reverse {
             let target = match dim_select {
-                MainDimensionSelect::F => &under.f,
-                MainDimensionSelect::X => &under.x,
-                MainDimensionSelect::Y => &under.y,
+                DimensionSelect::F => &under.f,
+                DimensionSelect::X => &under.x,
+                DimensionSelect::Y => &under.y,
             };
 
             let relation = Self::check_relation(dim, target);

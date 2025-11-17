@@ -1,6 +1,6 @@
 use crate::{bit_vec::BitVec, space_time_id_set::SpaceTimeIdSet};
 
-///Me（自身）から見た視点の結果
+///相手と自分を比べたときの自分のサイズ
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum Relation {
     Top,
@@ -17,9 +17,9 @@ impl SpaceTimeIdSet {
         if target == me {
             return Relation::Top;
         } else if (me_range.0 < *target) && (target < &me_range.1) {
-            return Relation::Under;
-        } else if (target_range.0 < *me) && (me < &target_range.1) {
             return Relation::Top;
+        } else if (target_range.0 < *me) && (me < &target_range.1) {
+            return Relation::Under;
         } else {
             return Relation::Disjoint;
         }

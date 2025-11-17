@@ -1,6 +1,6 @@
 use crate::{
     bit_vec::BitVec,
-    space_time_id_set::{Index, SpaceTimeIdSet, insert::insert_main_dim::MainDimensionSelect},
+    space_time_id_set::{Index, SpaceTimeIdSet, insert::insert_main_dim::DimensionSelect},
 };
 
 use std::ops::Bound::Excluded;
@@ -10,7 +10,7 @@ impl SpaceTimeIdSet {
     pub fn collect_under(
         &self,
         main_bit: &BitVec,
-        main_dim_select: &MainDimensionSelect,
+        main_dim_select: &DimensionSelect,
     ) -> Vec<Index> {
         let mut main_under = Vec::new();
 

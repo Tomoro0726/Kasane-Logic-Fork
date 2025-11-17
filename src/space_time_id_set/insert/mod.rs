@@ -3,7 +3,7 @@ use crate::{
     space_time_id::SpaceTimeId,
     space_time_id_set::{
         SpaceTimeIdSet,
-        insert::insert_main_dim::MainDimensionSelect,
+        insert::insert_main_dim::DimensionSelect,
         single::{
             convert_bitvec_f::convert_bitmask_f, convert_bitvec_xy::convert_bitmask_xy,
             convert_single_f::convert_f, convert_single_xy::convert_xy,
@@ -18,9 +18,11 @@ pub mod generate_index;
 pub mod insert_main_dim;
 pub mod search_under_count;
 pub mod select_dimensions;
+pub mod top_top_under;
 pub mod uncheck_delete;
 pub mod uncheck_insert;
 pub mod uncheck_insert_dim;
+pub mod under_under_top;
 
 impl SpaceTimeIdSet {
     pub fn insert(&mut self, id: SpaceTimeId) {
@@ -99,7 +101,7 @@ impl SpaceTimeIdSet {
                     &min_under,
                     &mut f_encoded,
                     &[&x_encoded, &y_encoded],
-                    MainDimensionSelect::F,
+                    DimensionSelect::F,
                 );
             } else if min_under == x_under_min_val.0 {
                 self.insert_main_dim(
@@ -108,7 +110,7 @@ impl SpaceTimeIdSet {
                     &min_under,
                     &mut x_encoded,
                     &[&f_encoded, &y_encoded],
-                    MainDimensionSelect::F,
+                    DimensionSelect::F,
                 );
             } else {
                 self.insert_main_dim(
@@ -117,7 +119,7 @@ impl SpaceTimeIdSet {
                     &min_under,
                     &mut y_encoded,
                     &[&f_encoded, &x_encoded],
-                    MainDimensionSelect::F,
+                    DimensionSelect::F,
                 );
             }
         }

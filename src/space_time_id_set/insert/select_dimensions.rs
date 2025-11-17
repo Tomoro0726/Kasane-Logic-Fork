@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::{
     bit_vec::BitVec,
-    space_time_id_set::{LayerInfo, SpaceTimeIdSet, insert::insert_main_dim::MainDimensionSelect},
+    space_time_id_set::{LayerInfo, SpaceTimeIdSet, insert::insert_main_dim::DimensionSelect},
 };
 
 pub struct DimensionRefs<'a> {
@@ -17,17 +17,17 @@ pub struct DimensionReverseRefs<'a> {
 
 impl SpaceTimeIdSet {
     /// メイン次元とその他の次元の参照を選択
-    pub fn select_dimensions(&self, dim: &MainDimensionSelect) -> DimensionRefs<'_> {
+    pub fn select_dimensions(&self, dim: &DimensionSelect) -> DimensionRefs<'_> {
         match dim {
-            MainDimensionSelect::F => DimensionRefs {
+            DimensionSelect::F => DimensionRefs {
                 main: &self.f,
                 others: [&self.x, &self.y],
             },
-            MainDimensionSelect::X => DimensionRefs {
+            DimensionSelect::X => DimensionRefs {
                 main: &self.x,
                 others: [&self.f, &self.y],
             },
-            MainDimensionSelect::Y => DimensionRefs {
+            DimensionSelect::Y => DimensionRefs {
                 main: &self.y,
                 others: [&self.f, &self.x],
             },
