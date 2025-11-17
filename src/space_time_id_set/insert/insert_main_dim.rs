@@ -215,7 +215,7 @@ impl SpaceTimeIdSet {
                             main_dim_select,
                         );
                     }
-                    _ => panic!(),
+                    _ => {}
                 }
             }
 
@@ -262,7 +262,7 @@ impl SpaceTimeIdSet {
                         //下位のIDを削除
                         self.uncheck_delete(&main_under[reverse_under_index]);
                     }
-                    _ => panic!(),
+                    _ => {}
                 }
             }
 

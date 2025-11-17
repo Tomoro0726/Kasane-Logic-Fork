@@ -1,60 +1,65 @@
 use crate::bit_vec::BitVec;
 
 impl BitVec {
-    /// 下位範囲を検索するときに必要な右側の端点の値を出す
-    /// (Start, End) ただし Start < End
+    /// (self, next_prefix)
     pub fn under_prefix(&self) -> (BitVec, BitVec) {
-        (self.clone(), self.next_prefix().clone())
+        (self.clone(), self.next_prefix())
     }
-}
 
-impl BitVec {
-    /// 自分の右側（prefix の upper bound）を求める
     pub fn next_prefix(&self) -> BitVec {
-        let mut out = self.clone();
-        let mut levels = out.0.clone();
+        let mut copyed = self.clone();
+        let len = copyed.0.len();
 
-        // levels を 2bit 単位で操作する
-        'outer: for byte_i in 0..levels.len() {
-            let byte = levels[byte_i];
-            for bitpos in (0..4).rev() {
-                // 上位階層から
-                let valid = (byte >> (bitpos * 2 + 1)) & 1;
-                let dir = (byte >> (bitpos * 2)) & 1;
+        // 全ての分岐Bitが 11 の場合のみ true のまま残る
+        let mut all_one = true;
 
-                if valid == 0 {
-                    // ここから下は存在しない
-                    break 'outer;
+        // まず "全ての分岐Bitが 11 かどうか" を判定
+        for (byte_index, byte) in self.0.iter().enumerate().rev() {
+            for i in 0..=3 {
+                let mask = 0b00000011 << (i * 2);
+
+                // 最後の2bit(i == 0) もここでは判定に含める
+                if (byte & mask) >> (i * 2) != 0b11 {
+                    all_one = false;
+                    break;
+                }
+            }
+            if !all_one {
+                break;
+            }
+        }
+
+        // ここから next_prefix 本体
+        for (byte_index, byte) in copyed.0.iter_mut().enumerate().rev() {
+            for i in 0..=3 {
+                // 最後の2bit（i == 0）だけ特別処理
+                if byte_index == len - 1 && i == 0 {
+                    if all_one {
+                        // 全て 11 のときだけ 11 -> 10 に変える
+                        *byte = (*byte & !(0b11)) | 0b10;
+                    }
+                    continue;
                 }
 
-                // dir=0 を dir=1 に変えられる階層を探す
-                if dir == 0 {
-                    // dir=1 に変更
-                    levels[byte_i] |= 1 << (bitpos * 2);
+                let mask = 0b00000011 << (i * 2);
+                let masked = *byte & mask;
 
-                    // それより下は全て削る（valid=0 にする）
-                    for bi in byte_i..levels.len() {
-                        // 下位階層だけ 2bit = 00 にする
-                        let mut b = levels[bi];
-                        for bp in (0..4).rev() {
-                            if bi == byte_i && bp <= bitpos {
-                                continue;
-                            }
-                            // valid=0 dir=0 をセット
-                            let mask = 0b11 << (bp * 2);
-                            b &= !mask;
-                        }
-                        levels[bi] = b;
+                match masked >> (i * 2) {
+                    0b10 => {
+                        // 10 -> 11
+                        *byte |= 0b01 << (i * 2);
+                        return copyed;
                     }
-
-                    return BitVec(levels);
+                    0b11 => {
+                        // 11 -> 10
+                        *byte ^= 0b01 << (i * 2);
+                        // → 続行して上位で処理させる
+                    }
+                    _ => {}
                 }
             }
         }
 
-        // 右側が存在しない（＝一番右の葉）なら
-        // artificial な最大値として 0xFF を追加する
-        levels.push(0xFF);
-        BitVec(levels)
+        copyed
     }
 }

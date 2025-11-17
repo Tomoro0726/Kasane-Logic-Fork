@@ -11,10 +11,10 @@ fn main() {
     // println!("END  :{}", end);
 
     // if start < test2 {
-    //     println!("{}<{}", start, test2);
+    //     print!("{}<{}", start, test2);
     // }
     // if test2 < end {
-    //     println!("{}<{}", test2, end);
+    //     print!("<{}", end);
     // }
 
     let mut set = SpaceTimeIdSet::new();
@@ -32,7 +32,7 @@ fn main() {
     let id2 = SpaceTimeId::new(
         5,
         [Some(7), Some(7)],
-        [Some(8), Some(5)],
+        [Some(8), Some(6)],
         [Some(6), Some(6)],
         0,
         [None, None],
