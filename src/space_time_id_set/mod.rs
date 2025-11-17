@@ -16,11 +16,12 @@ pub struct LayerInfo {
     pub count: usize,
 }
 
-#[derive(Debug)]
+#[derive(Hash, Eq, PartialEq, Debug)]
+
 pub struct ReverseInfo {
-    f: BitVec,
-    x: BitVec,
-    y: BitVec,
+    pub f: BitVec,
+    pub x: BitVec,
+    pub y: BitVec,
 }
 
 #[derive(Debug)]

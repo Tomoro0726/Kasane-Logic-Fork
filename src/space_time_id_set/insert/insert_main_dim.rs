@@ -118,6 +118,7 @@ impl SpaceTimeIdSet {
 
         //既にあるIDから削除するための構造体を作成
         let mut need_delete: HashSet<Index> = HashSet::new();
+        let mut need_insert: HashSet<ReverseInfo> = HashSet::new();
 
         'outer: for ((a_encode_index, a), (b_encode_index, b)) in iproduct!(
             a_relations.iter().enumerate(),
@@ -167,6 +168,10 @@ impl SpaceTimeIdSet {
             println!("{:?}", a_relation);
             println!("{:?}", b_relation);
 
+            //削除するべきものをまとめる
+            let mut need_delete_inside: HashSet<Index> = HashSet::new();
+            let mut need_insert_inside: HashSet<ReverseInfo> = HashSet::new();
+
             for ((reverse_top_index, a_rel), (_, b_rel)) in iproduct!(
                 a_relation.0.iter().enumerate(),
                 b_relation.0.iter().enumerate()
@@ -184,7 +189,8 @@ impl SpaceTimeIdSet {
                             main_top[reverse_top_index],
                             other_encoded[0][a_encode_index].1.clone(),
                             b_dim_select,
-                            &mut need_delete,
+                            &mut need_delete_inside,
+                            &mut need_insert_inside,
                         );
                     }
                     (Relation::Under, Relation::Top) => {
@@ -195,7 +201,8 @@ impl SpaceTimeIdSet {
                             main_top[reverse_top_index],
                             other_encoded[1][b_encode_index].1.clone(),
                             a_dim_select,
-                            &mut need_delete,
+                            &mut need_delete_inside,
+                            &mut need_insert_inside,
                         );
                     }
                     (Relation::Under, Relation::Under) => {
@@ -225,7 +232,8 @@ impl SpaceTimeIdSet {
                             main_under[reverse_under_index],
                             main_bit.clone(),
                             main_dim_select,
-                            &mut need_delete,
+                            &mut need_delete_inside,
+                            &mut need_insert_inside,
                         );
                     }
                     (Relation::Top, Relation::Under) => {
@@ -257,6 +265,8 @@ impl SpaceTimeIdSet {
                     _ => panic!(),
                 }
             }
+
+            println!("{:?}", need_divison);
 
             //自身を分割
             let f_splited;
@@ -302,9 +312,17 @@ impl SpaceTimeIdSet {
             for (f, x, y) in iproduct!(f_splited, x_splited, y_splited) {
                 self.uncheck_insert(&f, &x, &y);
             }
+
+            println!("INSIDE_DELETE:{:?}", need_delete_inside);
+
+            need_delete.extend(need_delete_inside);
+            need_insert.extend(need_insert_inside);
         }
         for need_delete_index in need_delete {
             self.uncheck_delete(&need_delete_index);
+        }
+        for reverse in need_insert {
+            self.uncheck_insert(&reverse.f, &reverse.x, &reverse.y);
         }
 
         main_encoded.remove(*main_index);

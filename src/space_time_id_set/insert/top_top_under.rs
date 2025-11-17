@@ -2,7 +2,9 @@ use std::collections::HashSet;
 
 use crate::{
     bit_vec::BitVec,
-    space_time_id_set::{Index, SpaceTimeIdSet, insert::insert_main_dim::DimensionSelect},
+    space_time_id_set::{
+        Index, ReverseInfo, SpaceTimeIdSet, insert::insert_main_dim::DimensionSelect,
+    },
 };
 
 impl SpaceTimeIdSet {
@@ -13,6 +15,7 @@ impl SpaceTimeIdSet {
         target_bit: BitVec,
         target_dim: DimensionSelect,
         need_delete: &mut HashSet<Index>,
+        need_insert: &mut HashSet<ReverseInfo>,
     ) {
         println!("top_top_under");
 
@@ -39,10 +42,22 @@ impl SpaceTimeIdSet {
 
         for single in splited {
             match target_dim {
-                DimensionSelect::F => self.uncheck_insert(&single, &reverse_x, &reverse_y),
-                DimensionSelect::X => self.uncheck_insert(&reverse_f, &single, &reverse_y),
-                DimensionSelect::Y => self.uncheck_insert(&reverse_f, &reverse_x, &single),
-            }
+                DimensionSelect::F => need_insert.insert(ReverseInfo {
+                    f: single,
+                    x: reverse_x.clone(),
+                    y: reverse_y.clone(),
+                }),
+                DimensionSelect::X => need_insert.insert(ReverseInfo {
+                    f: reverse_f.clone(),
+                    x: single,
+                    y: reverse_y.clone(),
+                }),
+                DimensionSelect::Y => need_insert.insert(ReverseInfo {
+                    f: reverse_f.clone(),
+                    x: reverse_x.clone(),
+                    y: single,
+                }),
+            };
         }
 
         need_delete.insert(target_index);

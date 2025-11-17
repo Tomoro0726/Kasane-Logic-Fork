@@ -4,7 +4,7 @@ use crate::{
     bit_vec::BitVec,
     space_time_id_set::{Index, SpaceTimeIdSet, insert::insert_main_dim::DimensionSelect},
 };
-
+#[derive(Debug)]
 pub struct NeedDivison {
     pub f: Vec<BitVec>,
     pub x: Vec<BitVec>,
