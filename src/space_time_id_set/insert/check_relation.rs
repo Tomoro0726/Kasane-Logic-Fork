@@ -21,8 +21,6 @@ impl SpaceTimeIdSet {
         } else if (target_range.0 < *me) && (me < &target_range.1) {
             return Relation::Top;
         } else {
-            println!("ME:{}", me);
-            println!("T :{}", target);
             return Relation::Disjoint;
         }
     }

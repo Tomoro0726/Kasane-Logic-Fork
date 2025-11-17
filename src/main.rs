@@ -1,7 +1,9 @@
 use kasane_logic::{
+    bit_vec::BitVec,
     space_time_id::SpaceTimeId,
     space_time_id_set::{
         SpaceTimeIdSet,
+        insert::divison,
         single::{
             convert_bitvec_f::convert_bitmask_f, convert_bitvec_xy::convert_bitmask_xy,
             convert_single_f::convert_f, convert_single_xy::convert_xy,
@@ -11,6 +13,16 @@ use kasane_logic::{
 };
 
 fn main() {
+    // let all = BitVec::from_vec(vec![0b10000000]);
+    // let test1 = BitVec::from_vec(vec![0b10101011]);
+    // let test2 = BitVec::from_vec(vec![0b10111011]);
+
+    // let a = SpaceTimeIdSet::division(&all, &mut vec![test1, test2]);
+
+    // for ele in a {
+    //     println!("{}", ele);
+    // }
+
     let mut set = SpaceTimeIdSet::new();
 
     let id1 = SpaceTimeId::new(
@@ -42,41 +54,6 @@ fn main() {
     for ele in set.get_all() {
         println!("{},", ele);
     }
-    // for ele in convert_f(id1.z, id1.f) {
-    //     println!("{}/{}/-/-,", ele.0, ele.1);
-    //     //println!("{}", convert_bitmask_f(ele.0, ele.1));
-    // }
-
-    // for ele in convert_f(id2.z, id2.f) {
-    //     println!("{}/{}/-/-,", ele.0, ele.1);
-    //     //println!("{}", convert_bitmask_f(ele.0, ele.1));
-    // }
-
-    // println!("===========");
-
-    // for ele in convert_f(id1.z, id1.f) {
-    //     //println!("{}/{}/-/-,", ele.0, ele.1);
-    //     println!("{}", convert_bitmask_f(ele.0, ele.1));
-    // }
-
-    // for ele in convert_f(id2.z, id2.f) {
-    //     //println!("{}/{}/-/-,", ele.0, ele.1);
-    //     println!("{}", convert_bitmask_f(ele.0, ele.1));
-    // }
-
-    // println!("===========");
-
-    // for ele in convert_f(id1.z, id1.f) {
-    //     let a = invert_bitmask_f(&convert_bitmask_f(ele.0, ele.1));
-
-    //     println!("{}/{}/-/-,", a.0, a.1);
-    // }
-
-    // for ele in convert_f(id2.z, id2.f) {
-    //     let a = invert_bitmask_f(&convert_bitmask_f(ele.0, ele.1));
-
-    //     println!("{}/{}/-/-,", a.0, a.1);
-    // }
 }
 
 // for ele in convert_xy(id1.z, id1.x) {

@@ -2,7 +2,11 @@ use itertools::iproduct;
 
 use crate::{
     bit_vec::BitVec,
-    space_time_id_set::{ReverseInfo, SpaceTimeIdSet, insert::check_relation::Relation},
+    space_time_id::SpaceTimeId,
+    space_time_id_set::{
+        ReverseInfo, SpaceTimeIdSet,
+        insert::{check_relation::Relation, select_dimensions},
+    },
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -117,7 +121,10 @@ impl SpaceTimeIdSet {
             let a_relations = match a {
                 Some(v) => v,
                 None => {
-                    //無条件挿入
+                    for (_, b_bit) in other_encoded[1] {
+                        self.uncheck_insert(main_bit, &other_encoded[0][a_index].1, b_bit);
+                    }
+
                     continue;
                 }
             };
@@ -125,7 +132,9 @@ impl SpaceTimeIdSet {
             let b_relations = match b {
                 Some(v) => v,
                 None => {
-                    //無条件挿入
+                    for (_, a_bit) in other_encoded[0] {
+                        self.uncheck_insert(main_bit, &other_encoded[1][b_index].1, a_bit);
+                    }
                     continue;
                 }
             };
@@ -359,11 +368,31 @@ impl SpaceTimeIdSet {
                 }
             }
             //自分から引くべきもの
-            let main_splited = divison.main;
-            let a_splited = divison.a;
-            let b_splited = divison.b;
+            let mut main_division = divison.main;
+            let mut a_division = divison.a;
+            let mut b_division = divison.b;
 
             //otherの軸を分割する
+            let main_splited = SpaceTimeIdSet::division(main_bit, &mut main_division);
+            let a_splited = SpaceTimeIdSet::division(&other_encoded[0][a_index].1, &mut a_division);
+            let b_splited = SpaceTimeIdSet::division(&other_encoded[1][b_index].1, &mut b_division);
+
+            for (main, a, b) in iproduct!(main_splited.iter(), a_splited.iter(), b_splited.iter(),)
+            {
+                match main_dim_select {
+                    MainDimensionSelect::F => {
+                        self.uncheck_insert(main, a, b);
+                    }
+                    MainDimensionSelect::X => {
+                        self.uncheck_insert(a, main, b);
+                    }
+                    MainDimensionSelect::Y => {
+                        self.uncheck_insert(a, b, main);
+                    }
+                }
+            }
+
+            main_encoded.remove(*main_index);
         }
     }
 
