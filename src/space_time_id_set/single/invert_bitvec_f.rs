@@ -6,5 +6,5 @@ pub fn invert_bitmask_f(bitmask: &BitVec) -> (u8, i64) {
     let (z, f) = invert_bitmask_xy(bitmask);
 
     //+1しなければならないのはおかしい気がするが、なぜがこれで動いてしまっている
-    (z, f as i64 + 1)
+    (z, f as i64)
 }

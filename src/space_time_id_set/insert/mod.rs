@@ -7,6 +7,7 @@ use crate::{
         single::{
             convert_bitvec_f::convert_bitmask_f, convert_bitvec_xy::convert_bitmask_xy,
             convert_single_f::convert_f, convert_single_xy::convert_xy,
+            invert_bitvec_f::invert_bitmask_f,
         },
     },
 };
@@ -54,9 +55,12 @@ impl SpaceTimeIdSet {
                 (Self::search_under_count(&self.y, &bit_vec), bit_vec)
             })
             .collect();
+
+        println!("{}", f_encoded.first().unwrap().1);
+        println!("{:?}", invert_bitmask_f(&f_encoded.first().unwrap().1));
+
         //最も探索範囲が小さくなりそうな次元を代表次元として挿入を繰り返す
         //どこかの次元がなくなるまで繰り返す
-
         while !(f_encoded.is_empty() || x_encoded.is_empty() || y_encoded.is_empty()) {
             println!("F:{:?}", f_encoded);
             println!("X:{:?}", x_encoded);
