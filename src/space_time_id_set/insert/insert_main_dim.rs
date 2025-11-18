@@ -39,6 +39,7 @@ impl SpaceTimeIdSet {
         other_encoded: &[&Vec<(Index, BitVec)>; 2],
         main_dim_select: DimensionSelect,
     ) {
+        println!("代表次元：{:?}", main_dim_select);
         //代表次元における上位範囲を収拾する
         let main_top: Vec<Index> = Self::collect_top(&self, main_bit, &main_dim_select);
 
@@ -175,7 +176,6 @@ impl SpaceTimeIdSet {
             for (i, (a_rel, b_rel)) in a_relation.0.iter().zip(b_relation.0.iter()).enumerate() {
                 match (a_rel, b_rel) {
                     (Relation::Top, Relation::Top) => {
-                        println!("TTT");
                         continue 'outer;
                     }
                     (Relation::Top, Relation::Under) => {
@@ -260,12 +260,10 @@ impl SpaceTimeIdSet {
                 DimensionSelect::F => {
                     f_splited = BitVec::division(main_bit.clone(), need_divison.f);
 
-                    println!("XXXXX");
                     x_splited = BitVec::division(
                         other_encoded[0][a_encode_index].1.clone(),
                         need_divison.x,
                     );
-                    println!("YYYYY");
 
                     y_splited = BitVec::division(
                         other_encoded[1][b_encode_index].1.clone(),
@@ -277,10 +275,8 @@ impl SpaceTimeIdSet {
                         other_encoded[0][a_encode_index].1.clone(),
                         need_divison.f,
                     );
-                    println!("XXXXX");
 
                     x_splited = BitVec::division(main_bit.clone(), need_divison.x);
-                    println!("YYYYY");
 
                     y_splited = BitVec::division(
                         other_encoded[1][b_encode_index].1.clone(),
@@ -292,13 +288,11 @@ impl SpaceTimeIdSet {
                         other_encoded[0][a_encode_index].1.clone(),
                         need_divison.f,
                     );
-                    println!("XXXXX");
 
                     x_splited = BitVec::division(
                         other_encoded[1][b_encode_index].1.clone(),
                         need_divison.x,
                     );
-                    println!("YYYYY");
 
                     y_splited = BitVec::division(main_bit.clone(), need_divison.y);
                 }

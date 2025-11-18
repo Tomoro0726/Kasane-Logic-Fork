@@ -1,49 +1,94 @@
 use crate::bit_vec::BitVec;
 
 impl BitVec {
-    /// target から division に含まれる部分を除いた残りの BitVec リストを返す
-    pub fn division(mut target: BitVec, division: Vec<BitVec>) -> Vec<BitVec> {
-        // 最初は target の範囲ひとつ
-        let mut ranges: Vec<(BitVec, BitVec)> = vec![target.range()];
-
-        // division それぞれを差し引く
-        for div in division {
-            let div_range = div.range();
-            let mut new_ranges = vec![];
-
-            for t_range in ranges {
-                new_ranges.extend(BitVec::subtract_range(t_range, div_range.clone()));
+    /// 有効階層の長さ（=1bit目が1である階層の数）
+    pub fn valid_layers(&self) -> usize {
+        let mut cnt = 0;
+        for b in &self.0 {
+            if b & 0b10 != 0 {
+                break; // [0, x] 層 → 無効
             }
-
-            ranges = new_ranges;
+            cnt += 1;
         }
-
-        // 残った範囲の start を BitVec として返す
-        ranges.into_iter().map(|(s, _)| s).collect()
+        cnt
     }
 
-    /// BitVec を区間 [start, end) に変換
+    /// 両閉区間の開始・終了値を返す
+    /// 仕様より、BitVec の prefix の最大値は「自分自身」
+    /// → range = [self, self]
     pub fn range(&self) -> (BitVec, BitVec) {
-        (self.clone(), self.next_prefix())
+        (self.clone(), self.clone())
     }
 
-    /// 区間の差 (t0, t1) - (d0, d1)
+    /// BitVec を1階層ぶん +1 した値を返す（辞書順で次の BitVec）
+    pub fn next(&self) -> Option<BitVec> {
+        let mut out = self.0.clone();
+        for i in (0..out.len()).rev() {
+            if out[i] < 3 {
+                // 2bit で表す値は 0〜3
+                out[i] += 1;
+                return Some(BitVec(out));
+            }
+            out[i] = 0; // carry
+        }
+        None // これ以上進めない
+    }
+
+    /// BitVec を1階層 -1 した値
+    pub fn prev(&self) -> Option<BitVec> {
+        let mut out = self.0.clone();
+        for i in (0..out.len()).rev() {
+            if out[i] > 0 {
+                out[i] -= 1;
+                return Some(BitVec(out));
+            }
+            out[i] = 3; // borrow: 2bit最大
+        }
+        None
+    }
+
+    /// (t0, t1) - (d0, d1) の区間差をとる（すべて両閉区間）
     fn subtract_range(
         (t0, t1): (BitVec, BitVec),
         (d0, d1): (BitVec, BitVec),
     ) -> Vec<(BitVec, BitVec)> {
         let mut out = vec![];
 
-        // 左側の残り
-        if t0 < d0 {
-            out.push((t0.clone(), d0.clone()));
+        // 左側 [t0, d0 - 1]
+        if let Some(left_end) = d0.prev() {
+            if t0 <= left_end {
+                out.push((t0.clone(), left_end));
+            }
         }
 
-        // 右側の残り
-        if d1 < t1 {
-            out.push((d1.clone(), t1.clone()));
+        // 右側 [d1 + 1, t1]
+        if let Some(right_start) = d1.next() {
+            if right_start <= t1 {
+                out.push((right_start, t1.clone()));
+            }
         }
 
         out
+    }
+
+    /// target の範囲から division の複数区間を順に除外し、
+    /// 最終的に残った BitVec の開始点のみ返す
+    pub fn division(target: BitVec, division: Vec<BitVec>) -> Vec<BitVec> {
+        // 初期は target の範囲
+        let mut ranges: Vec<(BitVec, BitVec)> = vec![target.range()];
+
+        for div in division {
+            let d_range = div.range();
+            let mut new_ranges = vec![];
+
+            for t_range in ranges {
+                new_ranges.extend(Self::subtract_range(t_range, d_range.clone()));
+            }
+
+            ranges = new_ranges;
+        }
+
+        // 残った区間の start だけ返す
+        ranges.into_iter().map(|(s, _)| s).collect()
     }
 }
