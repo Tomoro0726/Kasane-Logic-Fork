@@ -184,7 +184,7 @@ impl SpaceTimeIdSet {
                         //相手を切断
                         self.top_top_under(
                             main_top[i],
-                            other_encoded[0][a_encode_index].1.clone(),
+                            other_encoded[1][b_encode_index].1.clone(),
                             b_dim_select,
                             &mut need_delete_inside,
                             &mut need_insert_inside,
@@ -196,7 +196,7 @@ impl SpaceTimeIdSet {
                         //相手を切断
                         self.top_top_under(
                             main_top[i],
-                            other_encoded[1][b_encode_index].1.clone(),
+                            other_encoded[0][a_encode_index].1.clone(),
                             a_dim_select,
                             &mut need_delete_inside,
                             &mut need_insert_inside,

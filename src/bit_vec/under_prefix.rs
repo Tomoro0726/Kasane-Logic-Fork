@@ -3,6 +3,11 @@ use crate::bit_vec::BitVec;
 impl BitVec {
     /// (self, next_prefix)
     pub fn under_prefix(&self) -> (BitVec, BitVec) {
+        if self.clone() > self.next_prefix() {
+            println!("SELF  :{}", self.clone());
+            println!("UNDER :{}", self.next_prefix());
+            panic!()
+        }
         (self.clone(), self.next_prefix())
     }
 

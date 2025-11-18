@@ -19,7 +19,7 @@ impl SpaceTimeIdSet {
 
         if target == me {
             println!("EQUAL");
-            return Relation::Under;
+            return Relation::Top;
         } else if (me_range.0 < *target) && (target < &me_range.1) {
             println!("TOP");
             return Relation::Top;
