@@ -27,7 +27,6 @@ pub mod under_under_top;
 
 impl SpaceTimeIdSet {
     pub fn insert(&mut self, id: SpaceTimeId) {
-        println!("Call Insert");
         //IDを各次元ごとに最適な単体範囲に分解する
         let f_splited = convert_f(id.z, id.f);
         let x_splited = convert_xy(id.z, id.x);

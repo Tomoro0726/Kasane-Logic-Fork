@@ -53,6 +53,9 @@ impl SpaceTimeIdSet {
             under_relation.push(relation);
         }
 
+        println!("collect_other_dimension");
+
+        println!("Dim  :{:?}", dim_select);
         println!("Top  :{:?}", top_relation);
         println!("Under:{:?}", under_relation);
 

@@ -39,12 +39,13 @@ impl SpaceTimeIdSet {
         other_encoded: &[&Vec<(Index, BitVec)>; 2],
         main_dim_select: DimensionSelect,
     ) {
-        println!("代表次元：{:?}", main_dim_select);
+        println!("-------------代表次元：{:?}-------------", main_dim_select);
         //代表次元における上位範囲を収拾する
         let main_top: Vec<Index> = Self::collect_top(&self, main_bit, &main_dim_select);
 
         //代表次元において、上位も下位も存在しなかった場合は無条件に挿入
         if main_top.is_empty() && *main_under_count == 0 {
+            println!("無条件挿入１");
             //挿入
             for ((_, a_bit), (_, b_bit)) in iproduct!(other_encoded[0], other_encoded[1]) {
                 match main_dim_select {
@@ -98,6 +99,7 @@ impl SpaceTimeIdSet {
         let mut b_relations: Vec<Option<(Vec<Relation>, Vec<Relation>)>> = Vec::new();
 
         //Aについて収拾する
+        println!("Aを収拾");
         for (_, a_dim) in other_encoded[0] {
             a_relations.push(Self::collect_other_dimension(
                 a_dim,
@@ -108,6 +110,7 @@ impl SpaceTimeIdSet {
         }
 
         //Bについて収拾する
+        println!("Bを収拾");
         for (_, b_dim) in other_encoded[1] {
             b_relations.push(Self::collect_other_dimension(
                 b_dim,
@@ -165,18 +168,16 @@ impl SpaceTimeIdSet {
 
             //ここに来るということはAもBも関係があるので順番に競合を解消してあげる
 
-            //代表次元におけるTopから処理する
-            println!("{:?}", a_relation);
-            println!("{:?}", b_relation);
-
             //削除するべきものをまとめる
             let mut need_delete_inside: HashSet<Index> = HashSet::new();
             let mut need_insert_inside: HashSet<ReverseInfo> = HashSet::new();
 
+            //代表次元におけるTopから処理する
             for (i, (a_rel, b_rel)) in a_relation.0.iter().zip(b_relation.0.iter()).enumerate() {
                 match (a_rel, b_rel) {
                     (Relation::Top, Relation::Top) => {
-                        continue 'outer;
+                        //自分に含まれているIDを削除する
+                        need_delete_inside.insert(main_top[i]);
                     }
                     (Relation::Top, Relation::Under) => {
                         println!("TTU");
