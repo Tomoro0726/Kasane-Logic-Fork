@@ -34,13 +34,14 @@ impl SpaceTimeIdSet {
         main_index: &Index,
         main_under_count: &usize,
         main_encoded: &mut Vec<(Index, BitVec)>,
-        other_encoded: &[&Vec<(Index, BitVec)>; 2],
+        a_encoded: &Vec<(Index, BitVec)>,
+        b_encoded: &Vec<(Index, BitVec)>,
         main_dim_select: DimensionSelect,
     ) {
         let main_under: Vec<Index> = Self::collect_top(&self, main_bit, &main_dim_select);
 
         if main_under.is_empty() && *main_under_count == 0 {
-            for ((_, a_bit), (_, b_bit)) in iproduct!(other_encoded[0], other_encoded[1]) {
+            for ((_, a_bit), (_, b_bit)) in iproduct!(a_encoded, b_encoded) {
                 match main_dim_select {
                     DimensionSelect::F => self.uncheck_insert(main_bit, a_bit, b_bit),
                     DimensionSelect::X => self.uncheck_insert(a_bit, main_bit, b_bit),
@@ -92,7 +93,7 @@ impl SpaceTimeIdSet {
         let mut a_relations: Vec<Option<(Vec<BitVecRelation>, Vec<BitVecRelation>)>> = Vec::new();
         let mut b_relations: Vec<Option<(Vec<BitVecRelation>, Vec<BitVecRelation>)>> = Vec::new();
 
-        for (_, a_dim) in other_encoded[0] {
+        for (_, a_dim) in a_encoded {
             a_relations.push(Self::collect_other_dimension(
                 a_dim,
                 a_dim_select,
@@ -101,7 +102,7 @@ impl SpaceTimeIdSet {
             ));
         }
 
-        for (_, b_dim) in other_encoded[1] {
+        for (_, b_dim) in b_encoded {
             b_relations.push(Self::collect_other_dimension(
                 b_dim,
                 b_dim_select,
@@ -123,8 +124,8 @@ impl SpaceTimeIdSet {
                     self.uncheck_insert_dim(
                         main_dim_select,
                         main_bit,
-                        &other_encoded[0][a_encode_index].1,
-                        &other_encoded[1][b_encode_index].1,
+                        &a_encoded[a_encode_index].1,
+                        &b_encoded[b_encode_index].1,
                     );
                     continue;
                 }
@@ -136,8 +137,8 @@ impl SpaceTimeIdSet {
                     self.uncheck_insert_dim(
                         main_dim_select,
                         main_bit,
-                        &other_encoded[0][a_encode_index].1,
-                        &other_encoded[1][b_encode_index].1,
+                        &a_encoded[a_encode_index].1,
+                        &b_encoded[b_encode_index].1,
                     );
                     continue;
                 }
@@ -163,7 +164,7 @@ impl SpaceTimeIdSet {
                     (BitVecRelation::Greater | BitVecRelation::Equal, BitVecRelation::Less) => {
                         self.top_top_under(
                             main_top[i],
-                            other_encoded[1][b_encode_index].1.clone(),
+                            b_encoded[b_encode_index].1.clone(),
                             b_dim_select,
                             &mut need_delete_inside,
                             &mut need_insert_inside,
@@ -172,7 +173,7 @@ impl SpaceTimeIdSet {
                     (BitVecRelation::Less, BitVecRelation::Greater | BitVecRelation::Equal) => {
                         self.top_top_under(
                             main_top[i],
-                            other_encoded[0][a_encode_index].1.clone(),
+                            a_encoded[a_encode_index].1.clone(),
                             a_dim_select,
                             &mut need_delete_inside,
                             &mut need_insert_inside,
@@ -220,33 +221,21 @@ impl SpaceTimeIdSet {
                 DimensionSelect::F => {
                     f_splited = main_bit.subtract_ranges(&need_divison.f);
 
-                    x_splited = other_encoded[0][a_encode_index]
-                        .1
-                        .subtract_ranges(&need_divison.x);
+                    x_splited = a_encoded[a_encode_index].1.subtract_ranges(&need_divison.x);
 
-                    y_splited = other_encoded[1][b_encode_index]
-                        .1
-                        .subtract_ranges(&need_divison.y);
+                    y_splited = b_encoded[b_encode_index].1.subtract_ranges(&need_divison.y);
                 }
                 DimensionSelect::X => {
-                    f_splited = other_encoded[0][a_encode_index]
-                        .1
-                        .subtract_ranges(&need_divison.f);
+                    f_splited = a_encoded[a_encode_index].1.subtract_ranges(&need_divison.f);
 
                     x_splited = main_bit.subtract_ranges(&need_divison.x);
 
-                    y_splited = other_encoded[1][b_encode_index]
-                        .1
-                        .subtract_ranges(&need_divison.y);
+                    y_splited = b_encoded[b_encode_index].1.subtract_ranges(&need_divison.y);
                 }
                 DimensionSelect::Y => {
-                    f_splited = other_encoded[0][a_encode_index]
-                        .1
-                        .subtract_ranges(&need_divison.x);
+                    f_splited = a_encoded[a_encode_index].1.subtract_ranges(&need_divison.x);
 
-                    x_splited = other_encoded[1][b_encode_index]
-                        .1
-                        .subtract_ranges(&need_divison.x);
+                    x_splited = b_encoded[b_encode_index].1.subtract_ranges(&need_divison.x);
 
                     y_splited = main_bit.subtract_ranges(&need_divison.y);
                 }

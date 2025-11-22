@@ -7,29 +7,34 @@ use crate::{
 
 pub struct DimensionRefs<'a> {
     pub main: &'a BTreeMap<BitVec, LayerInfo>,
-    pub others: [&'a BTreeMap<BitVec, LayerInfo>; 2],
+    pub a: &'a BTreeMap<BitVec, LayerInfo>,
+    pub b: &'a BTreeMap<BitVec, LayerInfo>,
 }
 
 pub struct DimensionReverseRefs<'a> {
     pub main: &'a BTreeMap<BitVec, LayerInfo>,
-    pub others: [&'a BTreeMap<BitVec, LayerInfo>; 2],
+    pub a: &'a BTreeMap<BitVec, LayerInfo>,
+    pub b: &'a BTreeMap<BitVec, LayerInfo>,
 }
 
 impl SpaceTimeIdSet {
     /// メイン次元とその他の次元の参照を選択
-    pub(crate) fn select_dimensions(&self, dim: &DimensionSelect) -> DimensionRefs<'_> {
+    pub fn select_dimensions(&self, dim: &DimensionSelect) -> DimensionRefs<'_> {
         match dim {
             DimensionSelect::F => DimensionRefs {
                 main: &self.f,
-                others: [&self.x, &self.y],
+                a: &self.x,
+                b: &self.y,
             },
             DimensionSelect::X => DimensionRefs {
                 main: &self.x,
-                others: [&self.f, &self.y],
+                a: &self.f,
+                b: &self.y,
             },
             DimensionSelect::Y => DimensionRefs {
                 main: &self.y,
-                others: [&self.f, &self.x],
+                a: &self.f,
+                b: &self.x,
             },
         }
     }

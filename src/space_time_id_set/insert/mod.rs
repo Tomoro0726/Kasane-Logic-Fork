@@ -93,7 +93,8 @@ impl SpaceTimeIdSet {
                     &f_index,
                     &min_under,
                     &mut f_encoded,
-                    &[&x_encoded, &y_encoded],
+                    &x_encoded,
+                    &y_encoded,
                     DimensionSelect::F,
                 );
             } else if min_under == x_under_min_val.0 {
@@ -102,7 +103,8 @@ impl SpaceTimeIdSet {
                     &x_index,
                     &min_under,
                     &mut x_encoded,
-                    &[&f_encoded, &y_encoded],
+                    &f_encoded,
+                    &y_encoded,
                     DimensionSelect::X,
                 );
             } else {
@@ -111,7 +113,8 @@ impl SpaceTimeIdSet {
                     &y_index,
                     &min_under,
                     &mut y_encoded,
-                    &[&f_encoded, &x_encoded],
+                    &f_encoded,
+                    &x_encoded,
                     DimensionSelect::Y,
                 );
             }

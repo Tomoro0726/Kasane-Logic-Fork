@@ -6,7 +6,7 @@ use crate::{
 };
 
 impl SpaceTimeIdSet {
-    /// 与えられた次元において、上位の範囲を収集する
+    /// 指定された次元において、
     pub(crate) fn collect_top(
         &self,
         main_bit: &BitVec,
