@@ -4,7 +4,7 @@ use crate::{
     bit_vec::BitVec,
     space_time_id::SpaceTimeId,
     space_time_id_set::{
-        Interval, SpaceTimeIdSet,
+        SpaceTimeIdSet,
         insert::select_dimensions::DimensionSelect,
         single::{
             convert_bitvec_f::convert_bitmask_f, convert_bitvec_xy::convert_bitmask_xy,

@@ -1,11 +1,11 @@
-use std::collections::{HashSet, btree_map::Range};
+use std::collections::HashSet;
 
 use itertools::iproduct;
 
 use crate::{
     bit_vec::{BitVec, relation::BitVecRelation},
     space_time_id_set::{
-        Index, Interval, ReverseInfo, SpaceTimeIdSet,
+        Index, ReverseInfo, SpaceTimeIdSet,
         insert::{select_dimensions::DimensionSelect, split_self::RangesCollect},
     },
 };
@@ -193,27 +193,36 @@ impl SpaceTimeIdSet {
                 }
             }
 
+            //Main次元において、挿入するIDに切断が必要な部分を切断する
             let main_splited = main_bit.subtract_ranges(&need_divison.main);
 
-            let a_splited = a_encoded[a_encode_index]
-                .1
-                .subtract_ranges(&need_divison.main);
+            //A次元において、挿入するIDに切断が必要な部分を切断する
+            let a_splited = a_encoded[a_encode_index].1.subtract_ranges(&need_divison.a);
+
+            //B次元において、挿入するIDに切断が必要な部分を切断する
             let b_splited = b_encoded[b_encode_index].1.subtract_ranges(&need_divison.b);
 
+            //切断された範囲を挿入する
             for (main, a, b) in iproduct!(main_splited, a_splited, b_splited) {
                 self.uncheck_insert(&main, &a, &b, &main_dim_select);
             }
 
+            //既存IDのうち、調整が必要なものを統合する
             need_delete.extend(need_delete_inside);
             need_insert.extend(need_insert_inside);
         }
+
+        //既存IDのうち、削除すべきものを削除する
         for need_delete_index in need_delete {
             self.uncheck_delete(&need_delete_index);
         }
+
+        //既存IDを分割した場合に、分割後の範囲を挿入する
         for reverse in need_insert {
             self.uncheck_insert(&reverse.f, &reverse.x, &reverse.y, &DimensionSelect::F);
         }
 
+        //代表次元を削除して、上位のループに戻る
         main_encoded.remove(*main_index);
     }
 }

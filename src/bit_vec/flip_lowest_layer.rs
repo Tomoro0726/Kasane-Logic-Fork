@@ -1,7 +1,7 @@
 use crate::bit_vec::BitVec;
 
 impl BitVec {
-    /// 最下層の各2ビットペアを反転する:
+    /// 最下層の2ビットペアが表す位置を反転する:
     /// - `10` → `11`
     /// - `11` → `10`
     pub fn flip_lowest_layer(&mut self) {

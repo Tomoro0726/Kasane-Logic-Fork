@@ -8,7 +8,7 @@ use crate::{
 };
 
 impl SpaceTimeIdSet {
-    ///相手を切断する
+    ///上位,上位,下位の場合に相手を切断する
     pub(crate) fn split_other(
         &mut self,
         target_index: Index,
