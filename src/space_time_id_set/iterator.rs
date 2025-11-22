@@ -70,3 +70,9 @@ impl<'a> IntoIterator for &'a SpaceTimeIdSet {
         self.iter()
     }
 }
+
+impl<'a> ExactSizeIterator for SpaceTimeIdSetIter<'a> {
+    fn len(&self) -> usize {
+        self.reverse_iter.len()
+    }
+}

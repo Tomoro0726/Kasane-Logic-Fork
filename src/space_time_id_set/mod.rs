@@ -7,10 +7,12 @@ pub mod single;
 type Index = usize;
 
 pub mod insert;
+pub mod intersection;
 pub mod iterator;
+pub mod union;
 
 /// 階層ごとの情報を保持する構造体
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LayerInfo {
     //その階層が持つ実際のIDのIndex
     pub index: HashSet<Index>,
@@ -20,7 +22,7 @@ pub struct LayerInfo {
 }
 
 /// インデックスから各次元の情報を逆引きするための構造体
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone)]
 pub struct ReverseInfo {
     pub f: BitVec,
     pub x: BitVec,
@@ -38,7 +40,7 @@ pub struct Interval {
 ///
 /// 重複する範囲を自動的に統合し、階層構造を用いて効率的に格納する。
 /// 公開APIは`insert`と`get_all`のみ。
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SpaceTimeIdSet {
     //各次元の範囲を保存するためのBTreeMap
     f: BTreeMap<BitVec, LayerInfo>,
