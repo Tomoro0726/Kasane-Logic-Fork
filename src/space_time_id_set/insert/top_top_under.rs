@@ -3,8 +3,7 @@ use std::collections::HashSet;
 use crate::{
     bit_vec::BitVec,
     space_time_id_set::{
-        Index, ReverseInfo, SpaceTimeIdSet,
-        insert::insert_main_dim::DimensionSelect,
+        Index, ReverseInfo, SpaceTimeIdSet, insert::insert_main_dim::DimensionSelect,
     },
 };
 
@@ -18,9 +17,9 @@ impl SpaceTimeIdSet {
         need_delete: &mut HashSet<Index>,
         need_insert: &mut HashSet<ReverseInfo>,
     ) {
-
-
-        let reverse = self.reverse.get(&target_index)
+        let reverse = self
+            .reverse
+            .get(&target_index)
             .expect("Internal error: reverse index not found in top_top_under");
 
         let top = match target_dim {
@@ -29,8 +28,7 @@ impl SpaceTimeIdSet {
             DimensionSelect::Y => reverse.y.clone(),
         };
 
-        let splited = BitVec::division(top, vec![target_bit]);
-
+        let splited = top.subtract_range(&target_bit);
 
         let reverse_f = reverse.f.clone();
         let reverse_x = reverse.x.clone();

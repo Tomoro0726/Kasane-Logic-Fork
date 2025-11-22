@@ -218,43 +218,37 @@ impl SpaceTimeIdSet {
 
             match main_dim_select {
                 DimensionSelect::F => {
-                    f_splited = BitVec::division(main_bit.clone(), need_divison.f);
+                    f_splited = main_bit.subtract_ranges(&need_divison.f);
 
-                    x_splited = BitVec::division(
-                        other_encoded[0][a_encode_index].1.clone(),
-                        need_divison.x,
-                    );
+                    x_splited = other_encoded[0][a_encode_index]
+                        .1
+                        .subtract_ranges(&need_divison.x);
 
-                    y_splited = BitVec::division(
-                        other_encoded[1][b_encode_index].1.clone(),
-                        need_divison.y,
-                    );
+                    y_splited = other_encoded[1][b_encode_index]
+                        .1
+                        .subtract_ranges(&need_divison.y);
                 }
                 DimensionSelect::X => {
-                    f_splited = BitVec::division(
-                        other_encoded[0][a_encode_index].1.clone(),
-                        need_divison.f,
-                    );
+                    f_splited = other_encoded[0][a_encode_index]
+                        .1
+                        .subtract_ranges(&need_divison.f);
 
-                    x_splited = BitVec::division(main_bit.clone(), need_divison.x);
+                    x_splited = main_bit.subtract_ranges(&need_divison.x);
 
-                    y_splited = BitVec::division(
-                        other_encoded[1][b_encode_index].1.clone(),
-                        need_divison.y,
-                    );
+                    y_splited = other_encoded[1][b_encode_index]
+                        .1
+                        .subtract_ranges(&need_divison.y);
                 }
                 DimensionSelect::Y => {
-                    f_splited = BitVec::division(
-                        other_encoded[0][a_encode_index].1.clone(),
-                        need_divison.f,
-                    );
+                    f_splited = other_encoded[0][a_encode_index]
+                        .1
+                        .subtract_ranges(&need_divison.x);
 
-                    x_splited = BitVec::division(
-                        other_encoded[1][b_encode_index].1.clone(),
-                        need_divison.x,
-                    );
+                    x_splited = other_encoded[1][b_encode_index]
+                        .1
+                        .subtract_ranges(&need_divison.x);
 
-                    y_splited = BitVec::division(main_bit.clone(), need_divison.y);
+                    y_splited = main_bit.subtract_ranges(&need_divison.y);
                 }
             }
 
