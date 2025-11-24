@@ -1,4 +1,7 @@
-use crate::encode_id_set::{EncodeIDSet, Index};
+use crate::{
+    encode_id_set::{EncodeIDSet, Index},
+    space_time_id::SpaceTimeID,
+};
 
 impl EncodeIDSet {
     /// 二つのSpaceTimeIDSetを結合する
@@ -11,13 +14,13 @@ impl EncodeIDSet {
         };
 
         // large をコピーして small の内容を挿入する
-        let mut result = large.clone();
+        let mut result = EncodeIDSet::new();
 
         //個別に処理を行う
-        for (index, reverse) in &small.reverse {
-            //
-
-            //reverse要素を探索する
+        for (_, reverse) in &small.reverse {
+            for encode_id in large.get(reverse) {
+                result.uncheck_insert(encode_id);
+            }
         }
 
         result
