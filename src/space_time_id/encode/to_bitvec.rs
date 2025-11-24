@@ -32,6 +32,7 @@ pub(crate) fn to_bitvec_xy(z: u8, xy: u64) -> BitVec {
 
 ///FをBitVecに変換する
 pub fn to_bitvec_f(z: u8, f: i64) -> BitVec {
+    println!("Z:{},F:{}", z, f);
     if f >= 0 {
         to_bitvec_xy(z, f as u64)
     } else {
@@ -43,6 +44,7 @@ pub fn to_bitvec_f(z: u8, f: i64) -> BitVec {
 
         let mut converted = to_bitvec_xy(z, u);
         let masked: u8 = 0b11000000;
+
         converted.0[0] |= masked;
 
         converted

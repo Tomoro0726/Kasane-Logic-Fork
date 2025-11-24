@@ -21,12 +21,21 @@ impl SpaceTimeID {
         let x_splited = segment_xy(self.z, self.x);
         let y_splited = segment_xy(self.z, self.y);
 
-        iproduct!(&f_splited, &x_splited, &y_splited)
-            .map(|((z_f, f), (z_x, x), (z_y, y))| EncodeID {
-                f: to_bitvec_f(*z_f, *f),
-                x: to_bitvec_xy(*z_x, *x),
-                y: to_bitvec_xy(*z_y, *y),
-            })
+        let f_bitvecs: Vec<_> = f_splited.iter().map(|(z, v)| to_bitvec_f(*z, *v)).collect();
+
+        let x_bitvecs: Vec<_> = x_splited
+            .iter()
+            .map(|(z, v)| to_bitvec_xy(*z, *v))
+            .collect();
+
+        let y_bitvecs: Vec<_> = y_splited
+            .iter()
+            .map(|(z, v)| to_bitvec_xy(*z, *v))
+            .collect();
+
+        // iproductで直積
+        iproduct!(f_bitvecs, x_bitvecs, y_bitvecs)
+            .map(|(f, x, y)| EncodeID { f, x, y })
             .collect()
     }
 }
