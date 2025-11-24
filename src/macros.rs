@@ -39,7 +39,6 @@ macro_rules! id {
         f: $f:tt,
         x: $x:tt,
         y: $y:tt,
-        i: $i:expr,
         t: $t:tt $(,)?
     ) => {{
         let f_range: [Option<i64>; 2] = $crate::range_opt!($f);
@@ -47,7 +46,7 @@ macro_rules! id {
         let y_range: [Option<u64>; 2] = $crate::range_opt!($y);
         let t_range: [Option<u64>; 2] = $crate::range_opt!($t);
 
-        SpaceTimeID::new($z, f_range, x_range, y_range, $i, t_range)
+        SpaceTimeID::new($z, f_range, x_range, y_range, t_range)
     }};
 
     // 時間情報が省略されたパターン
@@ -61,6 +60,6 @@ macro_rules! id {
         let x_range: [Option<u64>; 2] = $crate::range_opt!($x);
         let y_range: [Option<u64>; 2] = $crate::range_opt!($y);
 
-        SpaceTimeID::new($z, f_range, x_range, y_range, 0, [None, None])
+        SpaceTimeID::new($z, f_range, x_range, y_range, [None, None])
     }};
 }

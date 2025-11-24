@@ -9,6 +9,8 @@ impl EncodeID {
         let (f_z, f_v) = to_segment_f(&self.f);
         let (x_z, x_v) = to_segment_xy(&self.x);
         let (y_z, y_v) = to_segment_xy(&self.y);
+        let (t_z, t_v) = to_segment_xy(&self.t);
+
         let max_z = f_z.max(x_z).max(y_z);
 
         let f = if max_z == f_z {
@@ -32,13 +34,17 @@ impl EncodeID {
             [y_v * k, (y_v + 1) * k - 1]
         };
 
+        let t = {
+            let k = 2_u64.pow((64 - y_z) as u32);
+            [t_v * k, (t_v + 1) * k - 1]
+        };
+
         SpaceTimeID {
             z: max_z,
             f,
             x,
             y,
-            i: 0,
-            t: [0, u64::MAX],
+            t,
         }
     }
 }
