@@ -36,16 +36,14 @@ pub fn to_bitvec_f(z: u8, f: i64) -> BitVec {
     if f >= 0 {
         to_bitvec_xy(z, f as u64)
     } else {
-        let u = if f == i64::MIN {
-            (i64::MAX as u64) + 1
-        } else {
-            f.abs() as u64
-        };
+        let u = (f.abs() - 1) as u64;
 
         let mut converted = to_bitvec_xy(z, u);
         let masked: u8 = 0b11000000;
 
         converted.0[0] |= masked;
+
+        println!("{}", converted);
 
         converted
     }

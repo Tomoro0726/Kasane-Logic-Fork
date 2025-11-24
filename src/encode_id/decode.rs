@@ -1,4 +1,8 @@
-use crate::{bit_vec::BitVec, encode_id::EncodeID, space_time_id::SpaceTimeID};
+use crate::{
+    bit_vec::BitVec,
+    encode_id::EncodeID,
+    space_time_id::{F_MAX, SpaceTimeID},
+};
 
 impl EncodeID {
     pub fn decode(&self) -> SpaceTimeID {
@@ -84,7 +88,7 @@ pub(crate) fn to_segment_f(bitmask: &BitVec) -> (u8, i64) {
         .expect("Internal error: BitVec is empty in invert_bitmask_f")
         >= 0b11000000
     {
-        return (z, -(f as i64) + 2_i64.pow(z.into()));
+        return (z, -(f as i64) + F_MAX[z as usize]);
     } else {
         return (z, f as i64);
     }
