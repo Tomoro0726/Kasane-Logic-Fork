@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts-rs")]
 use ts_rs::TS;
 
-use super::{coordinate::Coordinate, Point};
+use super::{constants::{WGS84_A, WGS84_INV_F}, coordinate::Coordinate, Point};
 
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -23,11 +23,9 @@ impl ECEF {
 
 impl Point for ECEF {
     fn to_coordinate(&self) -> Coordinate {
-        let a = 6378137.0_f64; // 長半径
-        let inv_f = 298.257223563_f64;
-        let f = 1.0 / inv_f;
-        let b = a * (1.0 - f);
-        let e2 = 1.0 - (b * b) / (a * a);
+        let f = 1.0 / WGS84_INV_F;
+        let b = WGS84_A * (1.0 - f);
+        let e2 = 1.0 - (b * b) / (WGS84_A * WGS84_A);
 
         let x = self.x;
         let y = self.y;
@@ -43,7 +41,7 @@ impl Point for ECEF {
         // Newton-Raphson 反復
         for _ in 0..10 {
             let sin_lat = lat.sin();
-            let n = a / (1.0 - e2 * sin_lat * sin_lat).sqrt();
+            let n = WGS84_A / (1.0 - e2 * sin_lat * sin_lat).sqrt();
             h = p / lat.cos() - n;
             let new_lat = (z + e2 * n * sin_lat).atan2(p);
 

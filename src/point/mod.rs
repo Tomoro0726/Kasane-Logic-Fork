@@ -4,6 +4,7 @@
 //! - `Coordinate`: 緯度経度高度座標
 //! - `ECEF`: 地球中心座標系
 
+mod constants;
 pub mod coordinate;
 pub mod ecef;
 

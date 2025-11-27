@@ -5,7 +5,7 @@ use ts_rs::TS;
 
 use crate::{error::Error, space_time_id::SpaceTimeID};
 
-use super::{ecef::ECEF, Point};
+use super::{constants::{WGS84_A, WGS84_INV_F}, ecef::ECEF, Point};
 
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -22,12 +22,9 @@ impl Point for Coordinate {
     }
 
     fn to_ecef(&self) -> ECEF {
-        // WGS-84 定数
-        let a: f64 = 6_378_137.0;
-        let inv_f: f64 = 298.257_223_563;
-        let f = 1.0 / inv_f;
-        let b = a * (1.0 - f);
-        let e2 = 1.0 - (b * b) / (a * a);
+        let f = 1.0 / WGS84_INV_F;
+        let b = WGS84_A * (1.0 - f);
+        let e2 = 1.0 - (b * b) / (WGS84_A * WGS84_A);
 
         let lat = self.latitude.to_radians();
         let lon = self.longitude.to_radians();
@@ -38,7 +35,7 @@ impl Point for Coordinate {
         let cos_lon = lon.cos();
         let sin_lon = lon.sin();
 
-        let n = a / (1.0 - e2 * sin_lat * sin_lat).sqrt();
+        let n = WGS84_A / (1.0 - e2 * sin_lat * sin_lat).sqrt();
 
         let x_f64 = (n + h) * cos_lat * cos_lon;
         let y_f64 = (n + h) * cos_lat * sin_lon;
