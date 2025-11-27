@@ -1,10 +1,12 @@
 use crate::{
-    point::{Point, ECEF},
+    encode_id::EncodeID,
+    encode_id_set::EncodeIDSet,
+    point::{ECEF, Point},
     space_time_id::SpaceTimeID,
 };
 use std::{collections::HashSet, f64::consts::PI};
 
-pub fn triangle<P: Point>(z: u8, a: P, b: P, c: P) -> HashSet<SpaceTimeID> {
+pub fn triangle<P: Point>(z: u8, a: P, b: P, c: P) -> EncodeIDSet {
     let ecef_a = a.to_ecef();
     let ecef_b = b.to_ecef();
     let ecef_c = c.to_ecef();
@@ -72,5 +74,11 @@ pub fn triangle<P: Point>(z: u8, a: P, b: P, c: P) -> HashSet<SpaceTimeID> {
         }
     }
 
-    voxels
+    let mut result = EncodeIDSet::new();
+
+    for encode_id in voxels {
+        result.uncheck_insert(encode_id);
+    }
+
+    result
 }

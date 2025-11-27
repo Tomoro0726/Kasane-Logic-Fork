@@ -1,11 +1,12 @@
 use std::{collections::HashSet, f64::consts::PI};
 
 use crate::{
-    point::{Point, ECEF},
+    encode_id_set::EncodeIDSet,
+    point::{ECEF, Point},
     space_time_id::SpaceTimeID,
 };
 
-pub fn line<P: Point>(z: u8, a: P, b: P) -> HashSet<SpaceTimeID> {
+pub fn line<P: Point>(z: u8, a: P, b: P) -> EncodeIDSet {
     let ecef_a = a.to_ecef();
     let ecef_b = b.to_ecef();
 
@@ -40,5 +41,11 @@ pub fn line<P: Point>(z: u8, a: P, b: P) -> HashSet<SpaceTimeID> {
         voxels.insert(voxel_id);
     }
 
-    voxels
+    let mut result = EncodeIDSet::new();
+
+    for encode_id in voxels {
+        result.uncheck_insert(encode_id);
+    }
+
+    result
 }

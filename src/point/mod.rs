@@ -11,7 +11,7 @@ pub mod ecef;
 pub use coordinate::Coordinate;
 pub use ecef::ECEF;
 
-use crate::space_time_id::SpaceTimeID;
+use crate::{encode_id::EncodeID, space_time_id::SpaceTimeID};
 
 /// 座標変換を提供するトレイト
 ///
@@ -24,7 +24,7 @@ pub trait Point: Clone + Copy {
     fn to_ecef(&self) -> ECEF;
 
     /// 指定されたズームレベルで時空間IDに変換
-    fn to_id(&self, z: u8) -> SpaceTimeID {
+    fn to_id(&self, z: u8) -> EncodeID {
         self.to_coordinate().to_id(z)
     }
 }

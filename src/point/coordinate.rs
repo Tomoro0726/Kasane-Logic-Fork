@@ -3,9 +3,20 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts-rs")]
 use ts_rs::TS;
 
-use crate::{error::Error, space_time_id::SpaceTimeID};
+use crate::{
+    encode_id::EncodeID,
+    error::Error,
+    space_time_id::{
+        SpaceTimeID,
+        encode::to_bitvec::{to_bitvec_f, to_bitvec_xy},
+    },
+};
 
-use super::{constants::{WGS84_A, WGS84_INV_F}, ecef::ECEF, Point};
+use super::{
+    Point,
+    constants::{WGS84_A, WGS84_INV_F},
+    ecef::ECEF,
+};
 
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -48,7 +59,7 @@ impl Point for Coordinate {
         }
     }
 
-    fn to_id(&self, z: u8) -> SpaceTimeID {
+    fn to_id(&self, z: u8) -> EncodeID {
         let lat = self.latitude;
         let lon = self.longitude;
         let alt = self.altitude;
@@ -67,11 +78,10 @@ impl Point for Coordinate {
             * n)
             .floor() as u64;
 
-        SpaceTimeID {
-            z,
-            f: [f_id, f_id],
-            x: [x_id, x_id],
-            y: [y_id, y_id],
+        EncodeID {
+            f: to_bitvec_f(z, f_id),
+            x: to_bitvec_xy(z, x_id),
+            y: to_bitvec_xy(z, y_id),
         }
     }
 }
