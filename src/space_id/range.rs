@@ -121,7 +121,26 @@ impl RangeID {
     }
 
     pub fn parent(&self, difference: u8) -> Option<RangeID> {
-        todo!()
+        let z = self.z.checked_sub(difference)?;
+        let shift = difference as u32;
+
+        let f = [
+            if self.f[0] == -1 {
+                -1
+            } else {
+                self.f[0] >> shift
+            },
+            if self.f[1] == -1 {
+                -1
+            } else {
+                self.f[1] >> shift
+            },
+        ];
+
+        let x = [self.x[0] >> shift, self.x[1] >> shift];
+        let y = [self.y[0] >> shift, self.y[1] >> shift];
+
+        Some(RangeID { z, f, x, y })
     }
 }
 
@@ -139,11 +158,47 @@ impl SpaceID for RangeID {
     }
 
     fn move_up(&mut self, by: i64) -> Result<(), Error> {
-        todo!()
+        let new_start = self.f[0].checked_add(by).ok_or(Error::FOutOfRange {
+            f: i64::MAX,
+            z: self.z,
+        })?;
+        let new_end = self.f[1].checked_add(by).ok_or(Error::FOutOfRange {
+            f: i64::MAX,
+            z: self.z,
+        })?;
+
+        if new_start < self.min_f() || new_end > self.max_f() {
+            return Err(Error::FOutOfRange {
+                f: new_start.max(new_end),
+                z: self.z,
+            });
+        }
+
+        self.f[0] = new_start;
+        self.f[1] = new_end;
+        Ok(())
     }
 
     fn move_down(&mut self, by: i64) -> Result<(), Error> {
-        todo!()
+        let new_start = self.f[0].checked_sub(by).ok_or(Error::FOutOfRange {
+            f: i64::MIN,
+            z: self.z,
+        })?;
+        let new_end = self.f[1].checked_sub(by).ok_or(Error::FOutOfRange {
+            f: i64::MIN,
+            z: self.z,
+        })?;
+
+        if new_start < self.min_f() || new_end > self.max_f() {
+            return Err(Error::FOutOfRange {
+                f: new_start.min(new_end),
+                z: self.z,
+            });
+        }
+
+        self.f[0] = new_start;
+        self.f[1] = new_end;
+        Ok(())
     }
 
     fn move_north(&mut self, by: u64) {
