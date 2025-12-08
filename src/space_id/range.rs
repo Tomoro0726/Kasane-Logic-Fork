@@ -6,10 +6,10 @@ use crate::{
     bit_vec::BitVec,
     encode_id::EncodeID,
     error::Error,
+    segment::Segment,
     space_id::{
         SpaceID,
         constants::{F_MAX, F_MIN, XY_MAX},
-        segment::Segment,
         single::SingleID,
     },
 };

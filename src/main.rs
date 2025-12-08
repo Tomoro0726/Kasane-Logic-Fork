@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use kasane_logic::space_id::{SpaceID, range::RangeID, single::SingleID};
 
 fn main() {

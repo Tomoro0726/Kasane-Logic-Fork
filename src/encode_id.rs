@@ -1,6 +1,6 @@
 use crate::{
     bit_vec::BitVec,
-    space_id::{range::RangeID, segment::Segment, single::SingleID},
+    space_id::{range::RangeID, single::SingleID},
 };
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]

@@ -1,10 +1,7 @@
-use crate::{
-    bit_vec::BitVec,
-    space_id::{constants::F_MAX, segment::Segment},
-};
+use crate::{bit_vec::BitVec, segment::Segment, space_id::constants::F_MAX};
 
 impl BitVec {
-    pub fn to_segment_f(&self) -> Segment<i64> {
+    pub(crate) fn to_segment_f(&self) -> Segment<i64> {
         let segment = self.to_segment_xy();
 
         if *self
@@ -25,7 +22,7 @@ impl BitVec {
         }
     }
 
-    pub fn to_segment_xy(&self) -> Segment<u64> {
+    pub(crate) fn to_segment_xy(&self) -> Segment<u64> {
         let bytes = &self.0;
         let total_bits = bytes.len() * 8;
         let total_layers = (total_bits + 1) / 2;

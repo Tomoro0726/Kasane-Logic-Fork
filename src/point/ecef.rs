@@ -1,13 +1,10 @@
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-#[cfg(feature = "ts-rs")]
-use ts_rs::TS;
-
-use super::{constants::{WGS84_A, WGS84_INV_F}, coordinate::Coordinate, Point};
+use super::{
+    Point,
+    constants::{WGS84_A, WGS84_INV_F},
+    coordinate::Coordinate,
+};
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "ts-rs", derive(TS))]
 pub struct ECEF {
     pub x: f64,
     pub y: f64,

@@ -2,7 +2,6 @@ use crate::error::Error;
 
 pub mod constants;
 pub mod range;
-pub mod segment;
 pub mod single;
 
 pub trait SpaceID {

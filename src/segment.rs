@@ -1,7 +1,7 @@
 use crate::bit_vec::BitVec;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Segment<T> {
+pub(crate) struct Segment<T> {
     pub z: u8,
     pub dim: T,
 }
