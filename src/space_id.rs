@@ -1,4 +1,4 @@
-use crate::{encode_id::EncodeID, error::Error};
+use crate::error::Error;
 
 pub mod constants;
 pub mod range;

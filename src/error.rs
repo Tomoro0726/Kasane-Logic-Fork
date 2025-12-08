@@ -18,7 +18,7 @@ pub enum Error {
     #[error("Y coordinate '{y}' is out of range for ZoomLevel '{z}'")]
     YOutOfRange { y: u64, z: u8 },
 
-    #[error("Latitude '{latitude}' is out of range (valid: -90.0..=90.0)")]
+    #[error("Latitude '{latitude}' is out of range (valid: -85.0511..=85.0511)")]
     LatitudeOutOfRange { latitude: f64 },
 
     #[error("Longitude '{longitude}' is out of range (valid: -180.0..=180.0)")]
