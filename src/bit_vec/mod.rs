@@ -3,6 +3,7 @@ pub mod flip_lowest_layer;
 pub mod format;
 pub mod relation;
 pub mod remove_lowest_layer;
+pub mod segment;
 pub mod subtract;
 pub mod upper_bound;
 #[cfg(feature = "serde")]

@@ -13,10 +13,10 @@ use crate::{
 };
 
 pub struct SingleID {
-    z: u8,
-    f: i64,
-    x: u64,
-    y: u64,
+    pub(crate) z: u8,
+    pub(crate) f: i64,
+    pub(crate) x: u64,
+    pub(crate) y: u64,
 }
 
 impl fmt::Display for SingleID {
@@ -239,5 +239,11 @@ impl SpaceID for SingleID {
             x: vec![x_bitvec],
             y: vec![y_bitvec],
         }
+    }
+}
+
+impl From<SingleID> for EncodeID {
+    fn from(id: SingleID) -> Self {
+        id.into_encode()
     }
 }

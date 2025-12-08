@@ -1,4 +1,6 @@
-use std::{collections::btree_map::Range, fmt, i64};
+use std::fmt;
+
+use itertools::iproduct;
 
 use crate::{
     bit_vec::BitVec,
@@ -8,6 +10,7 @@ use crate::{
         SpaceID,
         constants::{F_MAX, F_MIN, XY_MAX},
         segment::Segment,
+        single::SingleID,
     },
 };
 
@@ -144,6 +147,14 @@ impl RangeID {
 
         Some(RangeID { z, f, x, y })
     }
+
+    pub fn to_single_id(&self) -> impl Iterator<Item = SingleID> + '_ {
+        let f_range = self.f[0]..=self.f[1];
+        let x_range = self.x[0]..=self.x[1];
+        let y_range = self.y[0]..=self.y[1];
+
+        iproduct!(f_range, x_range, y_range).map(move |(f, x, y)| SingleID { z: self.z, f, x, y })
+    }
 }
 
 impl SpaceID for RangeID {
@@ -237,5 +248,11 @@ impl SpaceID for RangeID {
             x: x_bitvec,
             y: y_bitvec,
         }
+    }
+}
+
+impl From<RangeID> for EncodeID {
+    fn from(id: RangeID) -> Self {
+        id.into_encode()
     }
 }
