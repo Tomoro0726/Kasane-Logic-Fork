@@ -13,6 +13,19 @@ use crate::{
     },
 };
 
+/// SingleIDは標準的な空間 ID を表す型です。
+///
+/// 内部的には下記のような構造体で構成されており、各フィールドをプライベートにすることで、
+/// ズームレベルに依存するインデックス範囲やその他のバリデーションを適切に適用することができます。
+///
+/// ```
+/// pub struct SingleID {
+///     z: u8,
+///     f: i64,
+///     x: u64,
+///     y: u64,
+/// }
+/// ```
 #[derive(Debug, PartialEq, Eq)]
 pub struct SingleID {
     pub(crate) z: u8,
@@ -28,9 +41,7 @@ impl fmt::Display for SingleID {
 }
 
 impl SingleID {
-    /// 指定された値から標準的な空間ID [`SingleID`] を構築します。
-    ///
-    /// このコンストラクタは、与えられた `z`, `f`, `x`, `y` が  各ズームレベルにおける範囲内にあるかを検証し、範囲外の場合は [`Error`] を返します。
+    /// 指定された値から [`SingleID`] を構築します。このコンストラクタは、与えられた `z`, `f`, `x`, `y` が  各ズームレベルにおける範囲内にあるかを検証し、範囲外の場合は [`Error`] を返します。
     ///
     /// # パラメータ
     /// * `z` — ズームレベル（0–63の範囲が有効）  
@@ -46,14 +57,14 @@ impl SingleID {
     ///   それぞれ [`Error::XOutOfRange`]、[`Error::YOutOfRange`] を返します。
     ///
     ///
-    /// IDの作成
+    /// IDの作成:
     /// ```
     /// # use kasane_logic::id::space_id::single::SingleID;
     /// let id = SingleID::new(5, 3, 2, 10).unwrap();
     /// assert_eq!(id.to_string(), "5/3/2/10".to_string());
     /// ```
     ///
-    /// 次元の範囲外の検知
+    /// 次元の範囲外の検知:
     /// ```
     /// # use kasane_logic::id::space_id::single::SingleID;
     /// # use kasane_logic::error::Error;
@@ -61,7 +72,7 @@ impl SingleID {
     /// assert_eq!(id, Err(Error::YOutOfRange{z:3,y:10}));
     /// ```
     ///
-    /// ズームレベルの範囲外の検知
+    /// ズームレベルの範囲外の検知:
     /// ```
     /// # use kasane_logic::id::space_id::single::SingleID;
     /// # use kasane_logic::error::Error;
@@ -145,7 +156,7 @@ impl SingleID {
     /// # バリデーション
     /// - `value` が許容範囲外の場合、[`Error::FOutOfRange`] を返します。
     ///
-    /// 正常な更新
+    /// 正常な更新:
     /// ```
     /// # use kasane_logic::id::space_id::single::SingleID;
     /// let mut id = SingleID::new(5, 3, 2, 10).unwrap();
@@ -153,7 +164,7 @@ impl SingleID {
     /// assert_eq!(id.as_f(), 4);
     /// ```
     ///
-    /// 範囲外の検知
+    /// 範囲外の検知:
     /// ```
     /// # use kasane_logic::id::space_id::single::SingleID;
     /// # use kasane_logic::error::Error;
@@ -185,7 +196,7 @@ impl SingleID {
     /// # バリデーション
     /// - `value` が許容範囲外の場合、[`Error::XOutOfRange`] を返します。
     ///
-    /// 正常な更新
+    /// 正常な更新:
     /// ```
     /// # use kasane_logic::id::space_id::single::SingleID;
     /// let mut id = SingleID::new(5, 3, 2, 10).unwrap();
@@ -366,7 +377,7 @@ impl SingleID {
     /// 一切の範囲チェックや整合性チェックを行いません。
     /// そのため、高速に ID を生成できますが、**不正なパラメータを与えた場合の動作は未定義です**。
     ///
-    /// # Safety
+    /// # 注意
     /// 呼び出し側は、以下をすべて満たすことを保証しなければなりません。
     ///
     /// * `z` が有効なズームレベル（0–63）であること  
@@ -402,7 +413,6 @@ impl crate::id::space_id::SpaceID for SingleID {
         XY_MAX[self.z as usize]
     }
 
-    // bound (error on out-of-range)
     fn bound_up(&mut self, by: i64) -> Result<(), Error> {
         self.f = helpers::checked_add_f_in_range(self.f, by, self.min_f(), self.max_f(), self.z)?;
         Ok(())
