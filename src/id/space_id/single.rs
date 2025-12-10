@@ -1,14 +1,15 @@
-use std::{fmt, i64, u8};
-
+// src/id/space_id/single.rs
 use itertools::iproduct;
+use std::fmt;
 
 use crate::{
-    id::encode::EncodeID,
+    SpaceID,
     error::Error,
-    id::space_id::segment::Segment,
     id::space_id::{
-        SpaceId,
         constants::{F_MAX, F_MIN, XY_MAX},
+        encode::EncodeID,
+        helpers,
+        segment::Segment,
     },
 };
 
@@ -20,90 +21,81 @@ pub struct SingleID {
 }
 
 impl fmt::Display for SingleID {
-    ///読み方の定義をした
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}/{}/{}/{}", self.z, self.f, self.x, self.y)
     }
 }
 
-///SingleSpaceIDの独自メゾットを定義している
 impl SingleID {
     pub fn new(z: u8, f: i64, x: u64, y: u64) -> Result<SingleID, Error> {
-        //ズームレベルが範囲内であることを検証する
-        if z > 63 as u8 {
-            return Err(Error::ZoomLevelOutOfRange { zoom_level: z });
-        };
+        if z > 63u8 {
+            return Err(Error::ZoomLevelOutOfRange { z });
+        }
 
-        //各次元の範囲を定数配列から読み込む
-        let f_max = F_MAX[z as usize];
         let f_min = F_MIN[z as usize];
+        let f_max = F_MAX[z as usize];
         let xy_max = XY_MAX[z as usize];
 
-        //各次元の範囲が正しいことをチェックする
-        if !(f_min <= f && f <= f_max) {
+        if f < f_min || f > f_max {
             return Err(Error::FOutOfRange { f, z });
-        };
-
-        if !(x <= xy_max) {
+        }
+        if x > xy_max {
             return Err(Error::XOutOfRange { x, z });
-        };
-
-        if !(y <= xy_max) {
+        }
+        if y > xy_max {
             return Err(Error::YOutOfRange { y, z });
-        };
+        }
 
-        return Ok(SingleID { z, f, x, y });
+        Ok(SingleID { z, f, x, y })
     }
 
     pub fn as_z(&self) -> &u8 {
         &self.z
     }
-
     pub fn as_f(&self) -> &i64 {
         &self.f
     }
-
     pub fn as_x(&self) -> &u64 {
         &self.x
     }
-
     pub fn as_y(&self) -> &u64 {
         &self.y
     }
 
     pub fn set_f(&mut self, value: i64) -> Result<(), Error> {
-        if self.min_f() <= value && value <= self.max_f() {
-            self.f = value;
-        } else {
+        let min = self.min_f();
+        let max = self.max_f();
+        if value < min || value > max {
             return Err(Error::FOutOfRange {
                 f: value,
                 z: self.z,
             });
         }
+        self.f = value;
         Ok(())
     }
 
     pub fn set_x(&mut self, value: u64) -> Result<(), Error> {
-        if value <= self.max_xy() {
-            self.x = value;
-        } else {
+        let max = self.max_xy();
+        if value > max {
             return Err(Error::XOutOfRange {
                 x: value,
                 z: self.z,
             });
         }
+        self.x = value;
         Ok(())
     }
 
     pub fn set_y(&mut self, value: u64) -> Result<(), Error> {
-        if value <= self.max_xy() {
-            self.y = value;
-        } else {
+        let max = self.max_xy();
+        if value > max {
             return Err(Error::YOutOfRange {
                 y: value,
                 z: self.z,
             });
         }
+        self.y = value;
         Ok(())
     }
 
@@ -111,12 +103,10 @@ impl SingleID {
         let z = self
             .z
             .checked_add(difference)
-            .ok_or(Error::ZoomLevelOutOfRange {
-                zoom_level: u8::MAX,
-            })?;
+            .ok_or(Error::ZoomLevelOutOfRange { z: u8::MAX })?;
 
         if z > 63 {
-            return Err(Error::ZoomLevelOutOfRange { zoom_level: z });
+            return Err(Error::ZoomLevelOutOfRange { z });
         }
 
         let scale_f = 2_i64.pow(difference as u32);
@@ -130,98 +120,110 @@ impl SingleID {
     }
 
     pub fn parent(&self, difference: u8) -> Option<SingleID> {
-        match self.z.checked_sub(difference) {
-            Some(z) => {
-                let f = match self.f {
-                    -1 => -1,
-                    n => n / (1_i64 << difference),
-                };
-                let x = self.x / (2_u64.pow(difference.into()));
-                let y = self.y / (2_u64.pow(difference.into()));
-
-                return Some(SingleID { z, f, x, y });
-            }
-            None => {
-                return None;
-            }
+        let z = self.z.checked_sub(difference)?;
+        let f = if self.f == -1 {
+            -1
+        } else {
+            self.f >> difference
         };
+        let x = self.x >> (difference as u32);
+        let y = self.y >> (difference as u32);
+        Some(SingleID { z, f, x, y })
     }
 }
 
-impl SpaceId for SingleID {
+impl crate::id::space_id::SpaceID for SingleID {
     fn min_f(&self) -> i64 {
         F_MIN[self.z as usize]
     }
-
     fn max_f(&self) -> i64 {
         F_MAX[self.z as usize]
     }
-
     fn max_xy(&self) -> u64 {
         XY_MAX[self.z as usize]
     }
 
-    fn move_up(&mut self, by: i64) -> Result<(), Error> {
-        self.f = match self.f.checked_add(by) {
-            Some(f) => {
-                if self.min_f() <= f && f <= self.max_f() {
-                    f
-                } else {
-                    return Err(Error::FOutOfRange { f: f, z: self.z });
-                }
-            }
-            None => {
-                return Err(Error::FOutOfRange {
-                    f: i64::MAX,
-                    z: self.z,
-                });
-            }
-        };
+    // bound (error on out-of-range)
+    fn bound_up(&mut self, by: i64) -> Result<(), Error> {
+        self.f = helpers::checked_add_f_in_range(self.f, by, self.min_f(), self.max_f(), self.z)?;
         Ok(())
     }
 
-    fn move_down(&mut self, by: i64) -> Result<(), Error> {
-        self.f = match self.f.checked_sub(by) {
-            Some(f) => {
-                if self.min_f() <= f && f <= self.max_f() {
-                    f
-                } else {
-                    return Err(Error::FOutOfRange { f: f, z: self.z });
-                }
-            }
-            None => {
-                return Err(Error::FOutOfRange {
-                    f: i64::MIN,
-                    z: self.z,
-                });
-            }
-        };
+    fn bound_down(&mut self, by: i64) -> Result<(), Error> {
+        self.f = helpers::checked_sub_f_in_range(self.f, by, self.min_f(), self.max_f(), self.z)?;
         Ok(())
     }
 
-    fn move_north(&mut self, by: u64) {
-        self.y = (self.y.wrapping_add(by)) % self.max_xy();
+    fn bound_north(&mut self, by: u64) -> Result<(), Error> {
+        self.y = helpers::checked_add_u64_in_range(self.y, by, self.max_xy(), |v| {
+            Error::YOutOfRange { y: v, z: self.z }
+        })?;
+        Ok(())
     }
 
-    fn move_south(&mut self, by: u64) {
-        self.y = (self.y.wrapping_sub(by)) % self.max_xy();
+    fn bound_south(&mut self, by: u64) -> Result<(), Error> {
+        self.y = helpers::checked_sub_u64_in_range(self.y, by, self.max_xy(), |v| {
+            Error::YOutOfRange { y: v, z: self.z }
+        })?;
+        Ok(())
     }
 
-    fn move_east(&mut self, by: u64) {
-        self.x = (self.x.wrapping_sub(by)) % self.max_xy();
+    fn bound_east(&mut self, by: u64) -> Result<(), Error> {
+        self.x = helpers::checked_add_u64_in_range(self.x, by, self.max_xy(), |v| {
+            Error::XOutOfRange { x: v, z: self.z }
+        })?;
+        Ok(())
     }
 
-    fn move_west(&mut self, by: u64) {
-        self.x = (self.x.wrapping_add(by)) % self.max_xy();
+    fn bound_west(&mut self, by: u64) -> Result<(), Error> {
+        self.x = helpers::checked_sub_u64_in_range(self.x, by, self.max_xy(), |v| {
+            Error::XOutOfRange { x: v, z: self.z }
+        })?;
+        Ok(())
+    }
+
+    // wrap (cyclic)
+    fn wrap_up(&mut self, by: i64) {
+        self.f = helpers::wrap_add_i64_in_range(self.f, by, self.min_f(), self.max_f());
+    }
+
+    fn wrap_down(&mut self, by: i64) {
+        self.f = helpers::wrap_add_i64_in_range(self.f, -by, self.min_f(), self.max_f());
+    }
+
+    fn wrap_north(&mut self, by: u64) {
+        self.y = helpers::wrap_add_u64(self.y, by, self.max_xy());
+    }
+
+    fn wrap_south(&mut self, by: u64) {
+        self.y = helpers::wrap_add_u64(
+            self.y,
+            self.max_xy()
+                .wrapping_add(1)
+                .wrapping_sub(by % (self.max_xy().wrapping_add(1))),
+            self.max_xy(),
+        );
+    }
+
+    fn wrap_east(&mut self, by: u64) {
+        self.x = helpers::wrap_add_u64(self.x, by, self.max_xy());
+    }
+
+    fn wrap_west(&mut self, by: u64) {
+        self.x = helpers::wrap_add_u64(
+            self.x,
+            self.max_xy()
+                .wrapping_add(1)
+                .wrapping_sub(by % (self.max_xy().wrapping_add(1))),
+            self.max_xy(),
+        );
     }
 }
 
 impl From<SingleID> for EncodeID {
     fn from(id: SingleID) -> Self {
         let f_bitvec = Segment { z: id.z, dim: id.f }.to_bitvec();
-
         let x_bitvec = Segment { z: id.z, dim: id.x }.to_bitvec();
-
         let y_bitvec = Segment { z: id.z, dim: id.y }.to_bitvec();
 
         EncodeID {

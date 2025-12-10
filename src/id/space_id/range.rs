@@ -1,15 +1,16 @@
+// src/id/space_id/range.rs
+use itertools::iproduct;
 use std::fmt;
 
-use itertools::iproduct;
-
 use crate::{
+    SpaceID,
     bit_vec::BitVec,
-    id::encode::EncodeID,
     error::Error,
-    id::space_id::segment::Segment,
     id::space_id::{
-        SpaceId,
         constants::{F_MAX, F_MIN, XY_MAX},
+        encode::EncodeID,
+        helpers,
+        segment::Segment,
         single::SingleID,
     },
 };
@@ -45,22 +46,21 @@ fn format_dimension<T: PartialEq + fmt::Display>(dimension: [T; 2]) -> String {
 impl RangeID {
     pub fn new(z: u8, f: [i64; 2], x: [u64; 2], y: [u64; 2]) -> Result<RangeID, Error> {
         if z > 63u8 {
-            return Err(Error::ZoomLevelOutOfRange { zoom_level: z });
+            return Err(Error::ZoomLevelOutOfRange { z });
         }
 
         let f_min = F_MIN[z as usize];
         let f_max = F_MAX[z as usize];
         let xy_max = XY_MAX[z as usize];
 
-        // fの範囲が逆転していないか
         if f[0] > f[1] {
             return Err(Error::FRangeReversed {
+                z,
                 start: f[0],
                 end: f[1],
             });
         }
 
-        // fの範囲チェック
         if f[0] < f_min || f[0] > f_max {
             return Err(Error::FOutOfRange { f: f[0], z });
         }
@@ -68,7 +68,6 @@ impl RangeID {
             return Err(Error::FOutOfRange { f: f[1], z });
         }
 
-        // xの範囲チェック
         if x[0] > xy_max {
             return Err(Error::XOutOfRange { x: x[0], z });
         }
@@ -76,7 +75,6 @@ impl RangeID {
             return Err(Error::XOutOfRange { x: x[1], z });
         }
 
-        // yの範囲チェック
         if y[0] > xy_max {
             return Err(Error::YOutOfRange { y: y[0], z });
         }
@@ -90,15 +88,12 @@ impl RangeID {
     pub fn as_z(&self) -> &u8 {
         &self.z
     }
-
     pub fn as_f(&self) -> &[i64; 2] {
         &self.f
     }
-
     pub fn as_x(&self) -> &[u64; 2] {
         &self.x
     }
-
     pub fn as_y(&self) -> &[u64; 2] {
         &self.y
     }
@@ -107,20 +102,17 @@ impl RangeID {
         let z = self
             .z
             .checked_add(difference)
-            .ok_or(Error::ZoomLevelOutOfRange {
-                zoom_level: u8::MAX,
-            })?;
-
+            .ok_or(Error::ZoomLevelOutOfRange { z: u8::MAX })?;
         if z > 63 {
-            return Err(Error::ZoomLevelOutOfRange { zoom_level: z });
+            return Err(Error::ZoomLevelOutOfRange { z });
         }
 
         let scale_f = 2_i64.pow(difference as u32);
         let scale_xy = 2_u64.pow(difference as u32);
 
-        let f = [self.f[0] * scale_f, self.f[1] * scale_f + scale_f - 1];
-        let x = [self.x[0] * scale_xy, self.x[1] * scale_xy + scale_xy - 1];
-        let y = [self.y[0] * scale_xy, self.y[1] * scale_xy + scale_xy - 1];
+        let f = helpers::scale_range_i64(self.f[0], self.f[1], scale_f);
+        let x = helpers::scale_range_u64(self.x[0], self.x[1], scale_xy);
+        let y = helpers::scale_range_u64(self.y[0], self.y[1], scale_xy);
 
         Ok(RangeID { z, f, x, y })
     }
@@ -156,8 +148,7 @@ impl RangeID {
         iproduct!(f_range, x_range, y_range).map(move |(f, x, y)| SingleID { z: self.z, f, x, y })
     }
 }
-
-impl SpaceId for RangeID {
+impl SpaceID for RangeID {
     fn min_f(&self) -> i64 {
         F_MIN[self.z as usize]
     }
@@ -170,68 +161,198 @@ impl SpaceId for RangeID {
         XY_MAX[self.z as usize]
     }
 
-    fn move_up(&mut self, by: i64) -> Result<(), Error> {
-        let new_start = self.f[0].checked_add(by).ok_or(Error::FOutOfRange {
-            f: i64::MAX,
-            z: self.z,
-        })?;
-        let new_end = self.f[1].checked_add(by).ok_or(Error::FOutOfRange {
-            f: i64::MAX,
-            z: self.z,
-        })?;
+    /* -----------------------------
+     *     bound_*  (非循環、境界で Err)
+     * ----------------------------- */
 
-        if new_start < self.min_f() || new_end > self.max_f() {
-            return Err(Error::FOutOfRange {
-                f: new_start.max(new_end),
-                z: self.z,
-            });
+    fn bound_up(&mut self, by: i64) -> Result<(), Error> {
+        let min = self.min_f();
+        let max = self.max_f();
+        let z = self.z;
+
+        let ns = self.f[0]
+            .checked_add(by)
+            .ok_or(Error::FOutOfRange { f: i64::MAX, z })?;
+        let ne = self.f[1]
+            .checked_add(by)
+            .ok_or(Error::FOutOfRange { f: i64::MAX, z })?;
+
+        if ns < min || ns > max {
+            return Err(Error::FOutOfRange { f: ns, z });
+        }
+        if ne < min || ne > max {
+            return Err(Error::FOutOfRange { f: ne, z });
         }
 
-        self.f[0] = new_start;
-        self.f[1] = new_end;
+        self.f = [ns, ne];
         Ok(())
     }
 
-    fn move_down(&mut self, by: i64) -> Result<(), Error> {
-        let new_start = self.f[0].checked_sub(by).ok_or(Error::FOutOfRange {
-            f: i64::MIN,
-            z: self.z,
-        })?;
-        let new_end = self.f[1].checked_sub(by).ok_or(Error::FOutOfRange {
-            f: i64::MIN,
-            z: self.z,
-        })?;
+    fn bound_down(&mut self, by: i64) -> Result<(), Error> {
+        let min = self.min_f();
+        let max = self.max_f();
+        let z = self.z;
 
-        if new_start < self.min_f() || new_end > self.max_f() {
-            return Err(Error::FOutOfRange {
-                f: new_start.min(new_end),
-                z: self.z,
-            });
+        let ns = self.f[0]
+            .checked_sub(by)
+            .ok_or(Error::FOutOfRange { f: i64::MIN, z })?;
+        let ne = self.f[1]
+            .checked_sub(by)
+            .ok_or(Error::FOutOfRange { f: i64::MIN, z })?;
+
+        if ns < min || ns > max {
+            return Err(Error::FOutOfRange { f: ns, z });
+        }
+        if ne < min || ne > max {
+            return Err(Error::FOutOfRange { f: ne, z });
         }
 
-        self.f[0] = new_start;
-        self.f[1] = new_end;
+        self.f = [ns, ne];
         Ok(())
     }
 
-    fn move_north(&mut self, by: u64) {
-        self.y[0] = (self.y[0].wrapping_add(by)) % self.max_xy();
-        self.y[1] = (self.y[1].wrapping_add(by)) % self.max_xy();
+    fn bound_north(&mut self, by: u64) -> Result<(), Error> {
+        let max = self.max_xy();
+        let z = self.z;
+
+        let ns = self.y[0]
+            .checked_add(by)
+            .ok_or(Error::YOutOfRange { y: u64::MAX, z })?;
+        let ne = self.y[1]
+            .checked_add(by)
+            .ok_or(Error::YOutOfRange { y: u64::MAX, z })?;
+
+        if ns > max {
+            return Err(Error::YOutOfRange { y: ns, z });
+        }
+        if ne > max {
+            return Err(Error::YOutOfRange { y: ne, z });
+        }
+
+        self.y = [ns, ne];
+        Ok(())
     }
 
-    fn move_south(&mut self, by: u64) {
-        self.y[0] = (self.y[0].wrapping_sub(by)) % self.max_xy();
-        self.y[1] = (self.y[1].wrapping_sub(by)) % self.max_xy();
+    fn bound_south(&mut self, by: u64) -> Result<(), Error> {
+        let max = self.max_xy();
+        let z = self.z;
+
+        let ns = self.y[0]
+            .checked_sub(by)
+            .ok_or(Error::YOutOfRange { y: 0, z })?;
+        let ne = self.y[1]
+            .checked_sub(by)
+            .ok_or(Error::YOutOfRange { y: 0, z })?;
+
+        if ns > max {
+            return Err(Error::YOutOfRange { y: ns, z });
+        }
+        if ne > max {
+            return Err(Error::YOutOfRange { y: ne, z });
+        }
+
+        self.y = [ns, ne];
+        Ok(())
     }
 
-    fn move_east(&mut self, by: u64) {
-        self.x[0] = (self.x[0].wrapping_add(by)) % self.max_xy();
-        self.x[1] = (self.x[1].wrapping_add(by)) % self.max_xy();
+    fn bound_east(&mut self, by: u64) -> Result<(), Error> {
+        let max = self.max_xy();
+        let z = self.z;
+
+        let ns = self.x[0]
+            .checked_add(by)
+            .ok_or(Error::XOutOfRange { x: u64::MAX, z })?;
+        let ne = self.x[1]
+            .checked_add(by)
+            .ok_or(Error::XOutOfRange { x: u64::MAX, z })?;
+
+        if ns > max {
+            return Err(Error::XOutOfRange { x: ns, z });
+        }
+        if ne > max {
+            return Err(Error::XOutOfRange { x: ne, z });
+        }
+
+        self.x = [ns, ne];
+        Ok(())
     }
 
-    fn move_west(&mut self, by: u64) {
-        self.x[0] = (self.x[0].wrapping_sub(by)) % self.max_xy();
-        self.x[1] = (self.x[1].wrapping_sub(by)) % self.max_xy();
+    fn bound_west(&mut self, by: u64) -> Result<(), Error> {
+        let max = self.max_xy();
+        let z = self.z;
+
+        let ns = self.x[0]
+            .checked_sub(by)
+            .ok_or(Error::XOutOfRange { x: 0, z })?;
+        let ne = self.x[1]
+            .checked_sub(by)
+            .ok_or(Error::XOutOfRange { x: 0, z })?;
+
+        if ns > max {
+            return Err(Error::XOutOfRange { x: ns, z });
+        }
+        if ne > max {
+            return Err(Error::XOutOfRange { x: ne, z });
+        }
+
+        self.x = [ns, ne];
+        Ok(())
+    }
+
+    /* -----------------------------
+     *     wrap_*   (循環、エラーなし)
+     * ----------------------------- */
+
+    fn wrap_up(&mut self, by: i64) {
+        let min = self.min_f();
+        let max = self.max_f();
+        let width = (max - min + 1) as i128;
+
+        for v in &mut self.f {
+            let offset = (*v - min) as i128;
+            let new = ((offset + by as i128) % width + width) % width;
+            *v = (min as i128 + new) as i64;
+        }
+    }
+
+    fn wrap_down(&mut self, by: i64) {
+        self.wrap_up(-by);
+    }
+
+    fn wrap_north(&mut self, by: u64) {
+        let max = self.max_xy();
+        let ring = max + 1;
+
+        for v in &mut self.y {
+            *v = ((*v + by) % ring);
+        }
+    }
+
+    fn wrap_south(&mut self, by: u64) {
+        let max = self.max_xy();
+        let ring = max + 1;
+
+        for v in &mut self.y {
+            *v = ((*v + ring - (by % ring)) % ring);
+        }
+    }
+
+    fn wrap_east(&mut self, by: u64) {
+        let max = self.max_xy();
+        let ring = max + 1;
+
+        for v in &mut self.x {
+            *v = ((*v + by) % ring);
+        }
+    }
+
+    fn wrap_west(&mut self, by: u64) {
+        let max = self.max_xy();
+        let ring = max + 1;
+
+        for v in &mut self.x {
+            *v = ((*v + ring - (by % ring)) % ring);
+        }
     }
 }
 
