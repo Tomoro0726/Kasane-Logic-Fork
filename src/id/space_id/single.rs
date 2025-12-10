@@ -359,6 +359,36 @@ impl SingleID {
         let y = self.y >> (difference as u32);
         Some(SingleID { z, f, x, y })
     }
+
+    /// 検証を行わずに [`SingleID`] を構築します。
+    ///
+    /// この関数は [`SingleID::new`] と異なり、与えられた `z`, `f`, `x`, `y` に対して
+    /// 一切の範囲チェックや整合性チェックを行いません。
+    /// そのため、高速に ID を生成できますが、**不正なパラメータを与えた場合の動作は未定義です**。
+    ///
+    /// # Safety
+    /// 呼び出し側は、以下をすべて満たすことを保証しなければなりません。
+    ///
+    /// * `z` が有効なズームレベル（0–63）であること  
+    /// * `f` が与えられた `z` に応じて `F_MIN[z]..=F_MAX[z]` の範囲内であること  
+    /// * `x` および `y` が `0..=XY_MAX[z]` の範囲内であること  
+    ///
+    /// これらが保証されない場合、本構造体の他のメソッド（範囲を前提とした計算）が
+    /// パニック・不正メモリアクセス・未定義動作を引き起こす可能性があります。
+    ///
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// // パラメータが妥当であることを呼び出し側が保証する必要がある
+    /// let id = unsafe { SingleID::uncheck_new(5, 3, 2, 10) };
+    ///
+    /// assert_eq!(id.as_z(), 5);
+    /// assert_eq!(id.as_f(), 3);
+    /// assert_eq!(id.as_x(), 2);
+    /// assert_eq!(id.as_y(), 10);
+    /// ```
+    pub unsafe fn uncheck_new(z: u8, f: i64, x: u64, y: u64) -> SingleID {
+        SingleID { z, f, x, y }
+    }
 }
 
 impl crate::id::space_id::SpaceID for SingleID {
