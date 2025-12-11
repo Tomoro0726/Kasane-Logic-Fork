@@ -1,11 +1,14 @@
 use std::{cell::RefCell, collections::HashSet, f64::consts::PI, rc::Rc};
 
 use crate::{
-    geometry::point::{coordinate::Coordinate, ecef::Ecef},
+    geometry::{
+        constants::WGS84_A,
+        point::{coordinate::Coordinate, ecef::Ecef},
+    },
     id::space_id::single::SingleID,
 };
 
-pub fn triangle_iter(
+pub fn triangle(
     z: u8,
     a: Coordinate,
     b: Coordinate,
@@ -21,8 +24,7 @@ pub fn triangle_iter(
         .min(b.latitude.abs())
         .min(c.latitude.abs())
         .to_radians();
-    let r = 6_378_137.0_f64;
-    let d = PI * r * min_lat_rad.cos() * 2f64.powi(-2 - z as i32);
+    let d = PI * WGS84_A * min_lat_rad.cos() * 2f64.powi(-2 - z as i32);
 
     let l1 = ((ecef_c.x - ecef_b.x).powi(2)
         + (ecef_c.y - ecef_b.y).powi(2)

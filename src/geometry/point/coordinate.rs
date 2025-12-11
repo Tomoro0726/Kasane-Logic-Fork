@@ -9,9 +9,9 @@ use crate::{
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Coordinate {
-    pub latitude: f64,
-    pub longitude: f64,
-    pub altitude: f64,
+    pub(crate) latitude: f64,
+    pub(crate) longitude: f64,
+    pub(crate) altitude: f64,
 }
 
 impl Coordinate {
@@ -33,6 +33,26 @@ impl Coordinate {
             longitude,
             altitude,
         })
+    }
+
+    pub unsafe fn uncheck_new(latitude: f64, longitude: f64, altitude: f64) -> Coordinate {
+        Coordinate {
+            latitude,
+            longitude,
+            altitude,
+        }
+    }
+
+    pub fn as_latitude(&self) -> f64 {
+        self.latitude
+    }
+
+    pub fn as_longitude(&self) -> f64 {
+        self.longitude
+    }
+
+    pub fn as_altitude(&self) -> f64 {
+        self.altitude
     }
 
     pub fn to_id(&self, z: u8) -> SingleID {

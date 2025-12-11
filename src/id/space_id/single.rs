@@ -19,6 +19,8 @@ use crate::{
 /// 内部的には下記のような構造体で構成されており、各フィールドをプライベートにすることで、
 /// ズームレベルに依存するインデックス範囲やその他のバリデーションを適切に適用することができます。
 ///
+/// この型は `PartialOrd` / `Ord` を実装していますが、これは主に`BTreeSet` や `BTreeMap` などの順序付きコレクションでの格納・探索用です。実際の空間的な「大小」を意味するものではありません。
+///
 /// ```
 /// pub struct SingleID {
 ///     z: u8,
@@ -27,7 +29,7 @@ use crate::{
 ///     y: u64,
 /// }
 /// ```
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
 pub struct SingleID {
     pub(crate) z: u8,
     pub(crate) f: i64,
@@ -44,7 +46,7 @@ impl fmt::Display for SingleID {
     /// ```
     /// # use kasane_logic::id::space_id::single::SingleID;
     /// # use std::fmt::Write;
-    /// let id = SingleID { z: 4, f: 6, x: 9, y: 10 };
+    /// let id = SingleID::new(4, 6, 9, 10).unwrap();
     /// let s = format!("{}", id);
     /// assert_eq!(s, "4/6/9/10");
     /// ```

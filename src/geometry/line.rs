@@ -8,7 +8,7 @@ use crate::{
     id::space_id::single::SingleID,
 };
 
-pub fn line_iter_unique(z: u8, a: Coordinate, b: Coordinate) -> impl Iterator<Item = SingleID> {
+pub fn line(z: u8, a: Coordinate, b: Coordinate) -> impl Iterator<Item = SingleID> {
     // ECEF 座標に変換
     let ecef_a: Ecef = a.into();
     let ecef_b: Ecef = b.into();
