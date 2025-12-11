@@ -67,8 +67,8 @@ pub trait SpaceID {
     //WEBメルカトル法や高度の上限に来るとエラーを出す
 
     //基礎的な方角への移動
-    fn bound_up(&mut self, by: i64) -> Result<(), Error>;
-    fn bound_down(&mut self, by: i64) -> Result<(), Error>;
+    fn bound_up(&mut self, by: u64) -> Result<(), Error>;
+    fn bound_down(&mut self, by: u64) -> Result<(), Error>;
     fn bound_north(&mut self, by: u64) -> Result<(), Error>;
     fn bound_south(&mut self, by: u64) -> Result<(), Error>;
     fn bound_east(&mut self, by: u64) -> Result<(), Error>;
@@ -81,8 +81,8 @@ pub trait SpaceID {
     //WEBメルカトル法や高度の上限に来ると反対側に循環する
 
     //基礎的な方角への移動
-    fn wrap_up(&mut self, by: i64);
-    fn wrap_down(&mut self, by: i64);
+    fn wrap_up(&mut self, by: u64);
+    fn wrap_down(&mut self, by: u64);
     fn wrap_north(&mut self, by: u64);
     fn wrap_south(&mut self, by: u64);
     fn wrap_east(&mut self, by: u64);

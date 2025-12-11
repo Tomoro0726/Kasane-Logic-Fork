@@ -158,50 +158,12 @@ impl SpaceID for RangeID {
      *     bound_*  (非循環、境界で Err)
      * ----------------------------- */
 
-    fn bound_up(&mut self, by: i64) -> Result<(), Error> {
-        let min = self.min_f();
-        let max = self.max_f();
-        let z = self.z;
-
-        let ns = self.f[0]
-            .checked_add(by)
-            .ok_or(Error::FOutOfRange { f: i64::MAX, z })?;
-        let ne = self.f[1]
-            .checked_add(by)
-            .ok_or(Error::FOutOfRange { f: i64::MAX, z })?;
-
-        if ns < min || ns > max {
-            return Err(Error::FOutOfRange { f: ns, z });
-        }
-        if ne < min || ne > max {
-            return Err(Error::FOutOfRange { f: ne, z });
-        }
-
-        self.f = [ns, ne];
-        Ok(())
+    fn bound_up(&mut self, by: u64) -> Result<(), Error> {
+        todo!()
     }
 
-    fn bound_down(&mut self, by: i64) -> Result<(), Error> {
-        let min = self.min_f();
-        let max = self.max_f();
-        let z = self.z;
-
-        let ns = self.f[0]
-            .checked_sub(by)
-            .ok_or(Error::FOutOfRange { f: i64::MIN, z })?;
-        let ne = self.f[1]
-            .checked_sub(by)
-            .ok_or(Error::FOutOfRange { f: i64::MIN, z })?;
-
-        if ns < min || ns > max {
-            return Err(Error::FOutOfRange { f: ns, z });
-        }
-        if ne < min || ne > max {
-            return Err(Error::FOutOfRange { f: ne, z });
-        }
-
-        self.f = [ns, ne];
-        Ok(())
+    fn bound_down(&mut self, by: u64) -> Result<(), Error> {
+        todo!()
     }
 
     fn bound_north(&mut self, by: u64) -> Result<(), Error> {
@@ -411,20 +373,12 @@ impl SpaceID for RangeID {
         }
     }
 
-    fn wrap_up(&mut self, by: i64) {
-        let min = self.min_f();
-        let max = self.max_f();
-        let width = (max - min + 1) as i128;
-
-        for v in &mut self.f {
-            let offset = (*v - min) as i128;
-            let new = ((offset + by as i128) % width + width) % width;
-            *v = (min as i128 + new) as i64;
-        }
+    fn wrap_up(&mut self, by: u64) {
+        todo!()
     }
 
-    fn wrap_down(&mut self, by: i64) {
-        self.wrap_up(-by);
+    fn wrap_down(&mut self, by: u64) {
+        todo!()
     }
 
     fn wrap_north(&mut self, by: u64) {

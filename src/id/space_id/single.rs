@@ -1,6 +1,6 @@
 // src/id/space_id/single.rs
 use itertools::iproduct;
-use std::{collections::btree_map::Range, fmt};
+use std::{collections::btree_map::Range, fmt, u64};
 
 use crate::{
     error::Error,
@@ -471,9 +471,8 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// assert_eq!(id.bound_up(20), Err(Error::FOutOfRange { z: 4, f: 26 }));
     /// ```
     ///
-    fn bound_up(&mut self, by: i64) -> Result<(), Error> {
-        self.f = helpers::checked_add_f_in_range(self.f, by, self.min_f(), self.max_f(), self.z)?;
-        Ok(())
+    fn bound_up(&mut self, by: u64) -> Result<(), Error> {
+        self.bound_f(by as i64)
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を垂直下方向に動かします。
@@ -504,9 +503,8 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// assert_eq!(id.as_f(), 6);
     /// assert_eq!(id.bound_down(50), Err(Error::FOutOfRange { z: 4, f: -44 }));
     /// ```
-    fn bound_down(&mut self, by: i64) -> Result<(), Error> {
-        self.f = helpers::checked_sub_f_in_range(self.f, by, self.min_f(), self.max_f(), self.z)?;
-        Ok(())
+    fn bound_down(&mut self, by: u64) -> Result<(), Error> {
+        self.bound_f(-(by as i64))
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を北方向に動かします。
@@ -538,10 +536,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// assert_eq!(id.bound_north(50), Err(Error::YOutOfRange { z: 4, y: 60 }));
     /// ```
     fn bound_north(&mut self, by: u64) -> Result<(), Error> {
-        self.y = helpers::checked_add_u64_in_range(self.y, by, self.max_xy(), |v| {
-            Error::YOutOfRange { y: v, z: self.z }
-        })?;
-        Ok(())
+        self.bound_y(by as i64)
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を南方向に動かします。
@@ -573,134 +568,507 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// assert_eq!(id.bound_south(50), Err(Error::YOutOfRange { z: 4, y: 0 }));
     /// ```
     fn bound_south(&mut self, by: u64) -> Result<(), Error> {
-        self.y = helpers::checked_sub_u64_in_range(self.y, by, self.max_xy(), |v| {
-            Error::YOutOfRange { y: v, z: self.z }
-        })?;
-        Ok(())
+        self.bound_y(-(by as i64))
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を東方向に動かします。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// # バリデーション
+    /// - Xインデックスが範囲外になる場合は[`Error::XOutOfRange`]を返します
+    ///
+    /// 移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.bound_east(4).unwrap();
+    /// assert_eq!(id.as_x(), 13);
+    /// ```
+    ///
+    /// 範囲外の検知によるエラー
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    /// assert_eq!(id.bound_east(50), Err(Error::XOutOfRange { z: 4, x: 59 }));
+    /// ```
     fn bound_east(&mut self, by: u64) -> Result<(), Error> {
-        self.x = helpers::checked_add_u64_in_range(self.x, by, self.max_xy(), |v| {
-            Error::XOutOfRange { x: v, z: self.z }
-        })?;
-        Ok(())
+        self.bound_x(by as i64)
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を西方向に動かします。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// # バリデーション
+    /// - Xインデックスが範囲外になる場合は[`Error::XOutOfRange`]を返します
+    ///
+    /// 移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.bound_west(4).unwrap();
+    /// assert_eq!(id.as_x(), 5);
+    /// ```
+    ///
+    /// 範囲外の検知によるエラー
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    /// assert_eq!(id.bound_west(50), Err(Error::XOutOfRange { z: 4, x: 0 }));
+    /// ```
     fn bound_west(&mut self, by: u64) -> Result<(), Error> {
-        self.x = helpers::checked_sub_u64_in_range(self.x, by, self.max_xy(), |v| {
-            Error::XOutOfRange { x: v, z: self.z }
-        })?;
-        Ok(())
+        self.bound_x(-(by as i64))
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を垂直上下方向に動かします。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// # バリデーション
+    /// - Fインデックスが範囲外になる場合は[`Error::FOutOfRange`]を返します
+    ///
+    /// 移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_f(), 6);
+    ///
+    /// let _ = id.bound_f(-10).unwrap();
+    /// assert_eq!(id.as_f(), -4);
+    /// ```
+    ///
+    /// 範囲外の検知によるエラー
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_f(), 6);
+    /// assert_eq!(id.bound_f(50), Err(Error::FOutOfRange { z: 4, f: 56 }));
+    /// ```
     fn bound_f(&mut self, by: i64) -> Result<(), Error> {
-        self.f = helpers::checked_add_f_in_range(self.f, by, self.min_f(), self.max_f(), self.z)?;
+        let new = self.f.checked_add(by).ok_or(Error::FOutOfRange {
+            f: if by >= 0 { i64::MAX } else { i64::MIN },
+            z: self.z,
+        })?;
+
+        if new < self.min_f() || new > self.max_f() {
+            return Err(Error::FOutOfRange { f: new, z: self.z });
+        }
+
+        self.f = new;
+
         Ok(())
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を東西方向に動かします。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// # バリデーション
+    /// - Xインデックスが範囲外になる場合は[`Error::XOutOfRange`]を返します
+    ///
+    /// 移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.bound_x(-3).unwrap();
+    /// assert_eq!(id.as_x(), 6);
+    /// ```
+    ///
+    /// 範囲外の検知によるエラー
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    /// assert_eq!(id.bound_x(-10), Err(Error::XOutOfRange { z: 4, x: 0 }));
+    /// ```
     fn bound_x(&mut self, by: i64) -> Result<(), Error> {
-        let max = self.max_xy();
-
-        if by >= 0 {
-            let by_u = by as u64;
-            self.x = helpers::checked_add_u64_in_range(self.x, by_u, max, |v| {
-                Error::XOutOfRange { x: v, z: self.z }
-            })?;
+        let new = if by >= 0 {
+            self.x.checked_add(by as u64).ok_or(Error::XOutOfRange {
+                x: u64::MAX,
+                z: self.z,
+            })?
         } else {
-            let by_u = (-by) as u64;
-            self.x = helpers::checked_sub_u64_in_range(self.x, by_u, max, |v| {
-                Error::XOutOfRange { x: v, z: self.z }
-            })?;
+            self.x
+                .checked_sub(-by as u64)
+                .ok_or(Error::XOutOfRange { x: 0, z: self.z })?
+        };
+
+        if new > self.max_xy() {
+            return Err(Error::XOutOfRange { x: new, z: self.z });
         }
+
+        self.x = new;
 
         Ok(())
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を南北方向に動かします。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// # バリデーション
+    /// - Yインデックスが範囲外になる場合は[`Error::YOutOfRange`]を返します
+    ///
+    /// 移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_y(), 10);
+    ///
+    /// let _ = id.bound_y(-3).unwrap();
+    /// assert_eq!(id.as_y(), 7);
+    /// ```
+    ///
+    /// 範囲外の検知によるエラー
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_y(), 10);
+    /// assert_eq!(id.bound_y(-20), Err(Error::YOutOfRange { z: 4, y: 0 }));
+    /// ```
     fn bound_y(&mut self, by: i64) -> Result<(), Error> {
-        let max = self.max_xy();
-
-        if by >= 0 {
-            let by_u = by as u64;
-            self.y = helpers::checked_add_u64_in_range(self.y, by_u, max, |v| {
-                Error::YOutOfRange { y: v, z: self.z }
-            })?;
+        let new = if by >= 0 {
+            self.y.checked_add(by as u64).ok_or(Error::YOutOfRange {
+                y: u64::MAX,
+                z: self.z,
+            })?
         } else {
-            let by_u = (-by) as u64;
-            self.y = helpers::checked_sub_u64_in_range(self.y, by_u, max, |v| {
-                Error::YOutOfRange { y: v, z: self.z }
-            })?;
+            self.y
+                .checked_sub(-by as u64)
+                .ok_or(Error::YOutOfRange { y: 0, z: self.z })?
+        };
+
+        if new > self.max_xy() {
+            return Err(Error::YOutOfRange { y: new, z: self.z });
         }
+
+        self.y = new;
 
         Ok(())
     }
 
-    // wrap (cyclic)
-    fn wrap_up(&mut self, by: i64) {
-        self.f = helpers::wrap_add_i64_in_range(self.f, by, self.min_f(), self.max_f());
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を垂直上方向に動かします。合計値がFインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 通常の移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_f(), 6);
+    ///
+    /// let _ = id.wrap_up(4);
+    /// assert_eq!(id.as_f(), 10);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_f(), 6);
+    ///
+    /// let _ = id.wrap_up(20);
+    /// assert_eq!(id.as_f(), -6);
+    /// ```
+    fn wrap_up(&mut self, by: u64) {
+        self.wrap_f(by as i64)
     }
 
-    fn wrap_down(&mut self, by: i64) {
-        self.f = helpers::wrap_add_i64_in_range(self.f, -by, self.min_f(), self.max_f());
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を垂直上方向に動かします。合計値がFインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 通常の移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_f(), 6);
+    ///
+    /// let _ = id.wrap_down(4);
+    /// assert_eq!(id.as_f(), 2);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_f(), 6);
+    ///
+    /// let _ = id.wrap_down(20);
+    /// assert_eq!(id.as_f(), -14);
+    /// ```
+    fn wrap_down(&mut self, by: u64) {
+        self.wrap_f(-(by as i64))
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を北方向に動かします。合計値がYインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 通常の移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_y(), 14);
+    ///
+    /// let _ = id.wrap_north(1);
+    /// assert_eq!(id.as_y(), 14);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_y(), 14);
+    ///
+    /// let _ = id.wrap_north(30);
+    /// assert_eq!(id.as_y(), 14);
+    /// ```
     fn wrap_north(&mut self, by: u64) {
-        self.y = helpers::wrap_add_u64(self.y, by, self.max_xy());
+        self.wrap_f(by as i64)
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を南方向に動かします。合計値がYインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 通常の移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_y(), 14);
+    ///
+    /// let _ = id.wrap_south(1);
+    /// assert_eq!(id.as_y(), 13);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_y(), 14);
+    ///
+    /// let _ = id.wrap_south(30);
+    /// assert_eq!(id.as_y(), 0);
+    /// ```
     fn wrap_south(&mut self, by: u64) {
-        self.y = helpers::wrap_add_u64(
-            self.y,
-            self.max_xy()
-                .wrapping_add(1)
-                .wrapping_sub(by % (self.max_xy().wrapping_add(1))),
-            self.max_xy(),
-        );
+        self.wrap_y(-(by as i64))
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を東方向に動かします。合計値がXインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 通常の移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.wrap_east(1);
+    /// assert_eq!(id.as_x(), 10);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.wrap_east(30);
+    /// assert_eq!(id.as_x(), 7);
+    /// ```
     fn wrap_east(&mut self, by: u64) {
-        self.x = helpers::wrap_add_u64(self.x, by, self.max_xy());
+        self.wrap_x(by as i64)
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を西方向に動かします。合計値がXインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 通常の移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.wrap_west(1);
+    /// assert_eq!(id.as_x(), 8);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.wrap_west(30);
+    /// assert_eq!(id.as_x(), 11);
+    /// ```
     fn wrap_west(&mut self, by: u64) {
-        self.x = helpers::wrap_add_u64(
-            self.x,
-            self.max_xy()
-                .wrapping_add(1)
-                .wrapping_sub(by % (self.max_xy().wrapping_add(1))),
-            self.max_xy(),
-        );
+        self.wrap_x(-(by as i64))
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を垂直上下方向に動かします。合計値がFインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_f(), 6);
+    ///
+    /// let _ = id.wrap_f(-10);
+    /// assert_eq!(id.as_f(), -4);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_f(), 6);
+    ///
+    /// let _ = id.wrap_f(50);
+    /// assert_eq!(id.as_f(), -8);
+    /// ```
     fn wrap_f(&mut self, by: i64) {
-        self.f = helpers::wrap_add_i64_in_range(self.f, by, self.min_f(), self.max_f());
+        let min = self.min_f() as i128;
+        let max = self.max_f() as i128;
+        let width = max - min + 1;
+
+        let f_i128 = self.f as i128;
+        self.f = ((f_i128 - min + by as i128).rem_euclid(width) + min) as i64;
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を東西方向に動かします。合計値がXインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.wrap_x(-3);
+    /// assert_eq!(id.as_x(), 6);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_x(), 9);
+    ///
+    /// let _ = id.wrap_x(50);
+    /// assert_eq!(id.as_x(), 11);
+    /// ```
     fn wrap_x(&mut self, by: i64) {
-        let max = self.max_xy();
-        let width = max + 1;
+        let width = self.max_xy() as i128 + 1; // 幅を法とする
+        let current = self.x as i128;
+        let delta = by as i128;
 
-        if by >= 0 {
-            let by_u = (by as u64) % width;
-            self.x = helpers::wrap_add_u64(self.x, by_u, max);
-        } else {
-            let by_u = ((-by) as u64) % width;
-            let neg = width - by_u;
-            self.x = helpers::wrap_add_u64(self.x, neg, max);
-        }
+        // rem_euclid で負の数も正しくラップ
+        let new_value = (current + delta).rem_euclid(width);
+        self.x = new_value as u64;
     }
 
+    /// 指定したインデックス差 `by` に基づき、この `SingleID` を南北方向に動かします。合計値がYインデックスの範囲外の場合は値が循環します。
+    ///
+    /// # パラメータ
+    /// * `by` — インデックス差
+    ///
+    /// 移動
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_y(), 10);
+    ///
+    /// let _ = id.wrap_y(-3);
+    /// assert_eq!(id.as_y(), 7);
+    /// ```
+    ///
+    /// 範囲外による値の循環
+    /// ```
+    /// # use kasane_logic::id::space_id::single::SingleID;
+    /// # use kasane_logic::id::space_id::SpaceID;
+    /// # use kasane_logic::error::Error;
+    /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
+    /// assert_eq!(id.as_y(), 10);
+    ///
+    /// let _ = id.wrap_y(50);
+    /// assert_eq!(id.as_y(), 12);
+    /// ```
     fn wrap_y(&mut self, by: i64) {
-        let max = self.max_xy();
-        let width = max + 1;
+        let width = self.max_xy() as i128 + 1;
+        let current = self.y as i128;
+        let delta = by as i128;
 
-        if by >= 0 {
-            let by_u = (by as u64) % width;
-            self.y = helpers::wrap_add_u64(self.y, by_u, max);
-        } else {
-            let by_u = ((-by) as u64) % width;
-            let neg = width - by_u;
-            self.y = helpers::wrap_add_u64(self.y, neg, max);
-        }
+        let new_value = (current + delta).rem_euclid(width);
+        self.y = new_value as u64;
     }
 
     fn center(&self) -> Coordinate {
@@ -714,7 +1082,6 @@ impl crate::id::space_id::SpaceID for SingleID {
     fn vertices(&self) -> [Coordinate; 8] {
         use itertools::iproduct;
 
-        // 端点（2 点ずつ）
         let xs = [self.x as f64, self.x as f64 + 1.0];
         let ys = [self.y as f64, self.y as f64 + 1.0];
         let fs = [self.f as f64, self.f as f64 + 1.0];

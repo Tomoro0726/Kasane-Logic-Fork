@@ -11,10 +11,8 @@ fn main() {
     let mut id = SingleID::new(4, 6, 9, 14).unwrap();
 
     println!("{}", id);
-    println!("FMAX{}", id.max_f());
-    println!("FMIN{}", id.min_f());
 
-    let _ = id.bound_down(50).unwrap();
+    let _ = id.wrap_f(-30);
 
     println!("{}", id);
 }
