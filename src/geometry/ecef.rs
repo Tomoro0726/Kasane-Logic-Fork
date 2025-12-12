@@ -2,7 +2,7 @@ use crate::{
     error::Error,
     geometry::{
         constants::{WGS84_A, WGS84_INV_F},
-        point::{Point, coordinate::Coordinate},
+        coordinate::Coordinate,
     },
     id::space_id::single::SingleID,
 };
@@ -24,8 +24,6 @@ impl Ecef {
         Ok(coordinate.to_id(z))
     }
 }
-
-impl Point for Ecef {}
 
 impl TryFrom<Ecef> for Coordinate {
     type Error = Error;

@@ -48,7 +48,7 @@
 //!   境界で循環します。Xインデックスでは経度の循環性に対応します。、YインデックスではWEBメルカトル法で循環しているように見えますが、実世界ではWEB メルカトル法の制約（高緯度の非対応）により連続でないことに注意してください。Fインデックスについても XYインデックス の次元対称性のため循環を定義していますが実空間的な連続性を保証しません。
 //!
 
-use crate::{error::Error, geometry::point::coordinate::Coordinate};
+use crate::{error::Error, geometry::coordinate::Coordinate};
 
 //ユーザーに対して公開されているモジュール
 pub mod constants;

@@ -1,10 +1,7 @@
 use std::{collections::HashSet, f64::consts::PI, iter};
 
 use crate::{
-    geometry::{
-        constants::WGS84_A,
-        point::{coordinate::Coordinate, ecef::Ecef},
-    },
+    geometry::{constants::WGS84_A, coordinate::Coordinate, ecef::Ecef},
     id::space_id::single::SingleID,
 };
 

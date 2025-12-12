@@ -1,11 +1,11 @@
 // src/id/space_id/range.rs
 use itertools::iproduct;
-use std::fmt;
+use std::{collections::btree_map::Range, fmt};
 
 use crate::{
     bit_vec::BitVec,
     error::Error,
-    geometry::point::coordinate::Coordinate,
+    geometry::coordinate::Coordinate,
     id::space_id::{
         SpaceID,
         constants::{F_MAX, F_MIN, XY_MAX},
@@ -103,8 +103,8 @@ impl RangeID {
     /// * `f2` — 鉛直方向範囲の端のFインデックス
     /// * `x1` — 東西方向範囲の端のXインデックス
     /// * `x2` — 東西方向範囲の端のXインデックス
-    /// * `y1` — 南北方向範囲の端のXインデックス
-    /// * `y2` — 南北方向範囲の端のXインデックス
+    /// * `y1` — 南北方向範囲の端のYインデックス
+    /// * `y2` — 南北方向範囲の端のYインデックス
     ///
     /// # バリデーション
     /// - `z` が 63 を超える場合、[`Error::ZOutOfRange`] を返します。  
@@ -171,19 +171,92 @@ impl RangeID {
         Ok(RangeID { z, f, x, y })
     }
 
+    /// この `RangeID` が保持しているズームレベル `z` を返します。
+    ///
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [-3,29], [8,9], [5,10]).unwrap();
+    /// assert_eq!(id.as_z(), 5u8);
+    /// ```
     pub fn as_z(&self) -> u8 {
         self.z
     }
+
+    /// この `RangeID` が保持しているズームレベル `[f1,f2]` を返します。
+    ///
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [-3,29], [8,9], [5,10]).unwrap();
+    /// assert_eq!(id.as_f(), [-3i64,29i64]);
+    /// ```
     pub fn as_f(&self) -> [i64; 2] {
         self.f
     }
+
+    /// この `RangeID` が保持しているズームレベル `[x1,x2]` を返します。
+    ///
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [-3,29], [8,9], [5,10]).unwrap();
+    /// assert_eq!(id.as_x(), [8u64,9u64]);
+    /// ```
     pub fn as_x(&self) -> [u64; 2] {
         self.x
     }
+
+    /// この `RangeID` が保持しているズームレベル `[y1,y2]` を返します。
+    ///
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [-3,29], [8,9], [5,10]).unwrap();
+    /// assert_eq!(id.as_y(), [5u64,10u64]);
+    /// ```
     pub fn as_y(&self) -> [u64; 2] {
         self.y
     }
 
+    pub fn set_f(&mut self, value: [i64; 2]) -> Result<(), Error> {
+        todo!()
+    }
+
+    pub fn set_x(&mut self, value: [i64; 2]) -> Result<(), Error> {
+        todo!()
+    }
+
+    pub fn set_y(&mut self, value: [i64; 2]) -> Result<(), Error> {
+        todo!()
+    }
+
+    /// 指定したズームレベル差 `difference` に基づき、この `RangeID` が表す空間のすべての子 `RangeID` を生成します。
+    ///
+    /// # パラメータ
+    /// * `difference` — 子 ID を計算する際に増加させるズームレベル差（差の値が0–63の範囲の場合に有効）
+    ///
+    /// # バリデーション
+    /// - `self.z + difference` が `63` を超える場合、[`Error::ZOutOfRange`] を返します。
+    ///
+    /// `difference = 1` による細分化
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [-3,29], [8,9], [5,10]).unwrap();
+    /// let result = id.children(1).unwrap();
+    /// assert_eq!(result,  RangeID::new(6, [-6, 59], [16, 19], [10, 21] ).unwrap());
+    ///
+    /// ```
+    ///
+    /// ズームレベルの範囲外
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [-3,29], [8,9], [5,10]).unwrap();
+    /// let result = id.children(63);
+    /// assert!(matches!(result, Err(Error::ZOutOfRange { z: 68 })));
+    /// ```
     pub fn children(&self, difference: u8) -> Result<RangeID, Error> {
         let z = self
             .z
@@ -203,6 +276,49 @@ impl RangeID {
         Ok(RangeID { z, f, x, y })
     }
 
+    /// 指定したズームレベル差 `difference` に基づき、この `RangeID` を含む最小の大きさの `RangeID` を返します。
+    ///
+    /// # パラメータ
+    /// * `difference` — 親 ID を計算する際に減少させるズームレベル差
+    ///
+    /// # バリデーション
+    /// - `self.z - difference < 0` の場合、親が存在しないため `None` を返します。
+    ///
+    /// `difference = 1` による上位層への移動
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [1,29], [8,9], [5,10]).unwrap();
+    /// let parent = id.parent(1).unwrap();
+    ///
+    /// assert_eq!(parent.as_z(), 4);
+    /// assert_eq!(parent.as_f(), [0,14]);
+    /// assert_eq!(parent.as_x(), [4,4]);
+    /// assert_eq!(parent.as_y(), [2,5]);
+    /// ```
+    ///
+    /// Fが負の場合の挙動:
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [-10,-5], [8,9], [5,10]).unwrap();
+    ///
+    /// let parent = id.parent(1).unwrap();
+    ///
+    /// assert_eq!(parent.as_z(), 4);
+    /// assert_eq!(parent.as_f(), [-5,-3]);
+    /// assert_eq!(parent.as_x(), [4,4]);
+    /// assert_eq!(parent.as_y(), [2,5]);
+    /// ```
+    ///
+    /// ズームレベルの範囲外:
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// # use kasane_logic::error::Error;
+    /// let id = RangeID::new(5, [-10,-5], [8,9], [5,10]).unwrap();
+    /// // difference = 6 の場合は親が存在しないため None
+    /// assert!(id.parent(6).is_none());
+    /// ```
     pub fn parent(&self, difference: u8) -> Option<RangeID> {
         let z = self.z.checked_sub(difference)?;
         let shift = difference as u32;
@@ -226,12 +342,43 @@ impl RangeID {
         Some(RangeID { z, f, x, y })
     }
 
-    pub fn to_single_id(&self) -> impl Iterator<Item = SingleID> + '_ {
+    ///
+    pub fn to_single(&self) -> impl Iterator<Item = SingleID> + '_ {
         let f_range = self.f[0]..=self.f[1];
         let x_range = self.x[0]..=self.x[1];
         let y_range = self.y[0]..=self.y[1];
 
         iproduct!(f_range, x_range, y_range).map(move |(f, x, y)| SingleID { z: self.z, f, x, y })
+    }
+
+    /// 検証を行わずに [`RangeID`] を構築します。
+    ///
+    /// この関数は [`RangeID::new`] と異なり、与えられた `z`, `f1`, `f2`, `x1`,`x2`, `y1, `y2`` に対して
+    /// 一切の範囲チェックや整合性チェックを行いません。
+    /// そのため、高速に ID を生成できますが、**不正なパラメータを与えた場合の動作は未定義です**。
+    ///
+    /// # 注意
+    /// 呼び出し側は、以下をすべて満たすことを保証しなければなりません。
+    ///
+    /// * `z` が有効なズームレベル（0–63）であること  
+    /// * `f1`,`f2` が与えられた `z` に応じて `F_MIN[z]..=F_MAX[z]` の範囲内であること  
+    /// * `x1`,`x2` および `y1`,`y2` が `0..=XY_MAX[z]` の範囲内であること  
+    ///
+    /// これらが保証されない場合、本構造体の他のメソッド（範囲を前提とした計算）が
+    /// パニック・不正メモリアクセス・未定義動作を引き起こす可能性があります。
+    ///
+    /// ```
+    /// # use kasane_logic::id::space_id::range::RangeID;
+    /// // パラメータが妥当であることを呼び出し側が保証する必要がある
+    /// let id = unsafe { RangeID::uncheck_new(5, [-10,-5], [8,9], [5,10]) };
+    ///
+    /// assert_eq!(id.as_z(), 5);
+    /// assert_eq!(id.as_f(), [-10,-5]);
+    /// assert_eq!(id.as_x(), [8,9]);
+    /// assert_eq!(id.as_y(), [5,10]);
+    /// ```
+    pub unsafe fn uncheck_new(z: u8, f: [i64; 2], x: [u64; 2], y: [u64; 2]) -> RangeID {
+        RangeID { z, f, x, y }
     }
 }
 impl SpaceID for RangeID {

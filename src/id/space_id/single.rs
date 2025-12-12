@@ -3,7 +3,7 @@ use std::{fmt, u64};
 
 use crate::{
     error::Error,
-    geometry::point::coordinate::Coordinate,
+    geometry::coordinate::Coordinate,
     id::space_id::{
         SpaceID,
         constants::{F_MAX, F_MIN, XY_MAX},

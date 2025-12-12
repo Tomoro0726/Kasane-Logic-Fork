@@ -2,7 +2,7 @@ use crate::{
     error::Error,
     geometry::{
         constants::{WGS84_A, WGS84_INV_F},
-        point::{Point, ecef::Ecef},
+        ecef::Ecef,
     },
     id::space_id::single::SingleID,
 };
@@ -77,8 +77,6 @@ impl Coordinate {
         SingleID { z, f, x, y }
     }
 }
-
-impl Point for Coordinate {}
 
 impl From<Coordinate> for Ecef {
     fn from(value: Coordinate) -> Self {
