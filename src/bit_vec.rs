@@ -3,9 +3,9 @@
 //! このモジュールは、時空間IDの各次元の階層構造をビット列で表現し、
 //! 効率的なビット操作を提供します。
 
-use core::fmt;
-use crate::id::space_id::segment::Segment;
 use crate::id::space_id::constants::F_MAX;
+use crate::id::space_id::segment::Segment;
+use core::fmt;
 
 /// ビット列を用いて時空間IDの各次元の階層構造を管理する
 ///
@@ -85,15 +85,15 @@ impl BitVec {
     }
 
     /// self と other の階層構造の関係を返す
-    /// 
+    ///
     /// 返り値は `other` の `self` に対する関係を表す：
     /// - `Ancestor`: `other` が `self` の祖先（`other` が `self` を包含する）
     /// - `Descendant`: `other` が `self` の子孫（`self` が `other` を包含する）
     /// - `Equal`: `self` と `other` が同じ
     /// - `Unrelated`: 無関係
     pub fn relation(&self, other: &Self) -> BitVecRelation {
-        let self_upper = self.upper_bound();
-        let other_upper = other.upper_bound();
+        let self_upper = self.upper_move();
+        let other_upper = other.upper_move();
 
         if self == other {
             return BitVecRelation::Equal;
@@ -205,7 +205,7 @@ impl BitVec {
 
             for now in result.into_iter() {
                 // div が now の範囲に含まれる場合 → 分割
-                if div >= &now && &div <= &&now.upper_bound() {
+                if div >= &now && &div <= &&now.upper_move() {
                     let div_clone = div.clone();
                     next.extend(BitVec::subtract_range(&now, &div_clone));
                 } else {
@@ -236,15 +236,15 @@ impl BitVec {
 
     /// # 概要
     /// この関数は、`BitVec` が表す階層ID（2ビット単位の階層構造）について、
-    /// 同一の prefix に属する範囲の **右側開区間上限（upper bound）** を計算して返します。
+    /// 同一の prefix に属する範囲の **右側開区間上限（upper move）** を計算して返します。
     ///
     /// # 動作例
     /// - 入力 `1010111011000000`→ 出力 `10101111`
     /// - 入力 `11101000`→ 出力 `11101100`
-    pub fn upper_bound(&self) -> BitVec {
+    pub fn upper_move(&self) -> BitVec {
         let mut copyed = self.clone();
 
-        // upper_bound 本体（2bit単位で後ろから走査）
+        // upper_move 本体（2bit単位で後ろから走査）
         for (_byte_index, byte) in copyed.0.iter_mut().enumerate().rev() {
             for i in 0..=3 {
                 let mask = 0b00000011 << (i * 2);

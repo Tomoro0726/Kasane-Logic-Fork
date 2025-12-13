@@ -92,7 +92,8 @@ impl SingleID {
     /// assert_eq!(id, Err(Error::ZOutOfRange { z:68 }));
     /// ```
     pub fn new(z: u8, f: i64, x: u64, y: u64) -> Result<SingleID, Error> {
-        if z > 63u8 {
+        //todo
+        if z > 60 {
             return Err(Error::ZOutOfRange { z });
         }
 
@@ -466,7 +467,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
     /// assert_eq!(id.as_f(), 6);
     ///
-    /// let _ = id.bound_up(4).unwrap();
+    /// let _ = id.move_up(4).unwrap();
     /// assert_eq!(id.as_f(), 10);
     /// ```
     ///
@@ -478,11 +479,11 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
     /// assert_eq!(id.as_f(), 6);
     ///
-    /// assert_eq!(id.bound_up(20), Err(Error::FOutOfRange { z: 4, f: 26 }));
+    /// assert_eq!(id.move_up(20), Err(Error::FOutOfRange { z: 4, f: 26 }));
     /// ```
     ///
-    fn bound_up(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_f(by as i64)
+    fn move_up(&mut self, by: u64) -> Result<(), Error> {
+        self.move_f(by as i64)
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を垂直下方向に動かします。
@@ -500,7 +501,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
     /// assert_eq!(id.as_f(), 6);
     ///
-    /// let _ = id.bound_down(4).unwrap();
+    /// let _ = id.move_down(4).unwrap();
     /// assert_eq!(id.as_f(), 2);
     /// ```
     ///
@@ -511,10 +512,10 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// # use kasane_logic::error::Error;
     /// let mut id = SingleID::new(4, 6, 9, 14).unwrap();
     /// assert_eq!(id.as_f(), 6);
-    /// assert_eq!(id.bound_down(50), Err(Error::FOutOfRange { z: 4, f: -44 }));
+    /// assert_eq!(id.move_down(50), Err(Error::FOutOfRange { z: 4, f: -44 }));
     /// ```
-    fn bound_down(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_f(-(by as i64))
+    fn move_down(&mut self, by: u64) -> Result<(), Error> {
+        self.move_f(-(by as i64))
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を北方向に動かします。
@@ -532,7 +533,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_y(), 10);
     ///
-    /// let _ = id.bound_north(4).unwrap();
+    /// let _ = id.move_north(4).unwrap();
     /// assert_eq!(id.as_y(), 14);
     /// ```
     ///
@@ -543,10 +544,10 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// # use kasane_logic::error::Error;
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_f(), 6);
-    /// assert_eq!(id.bound_north(50), Err(Error::YOutOfRange { z: 4, y: 60 }));
+    /// assert_eq!(id.move_north(50), Err(Error::YOutOfRange { z: 4, y: 60 }));
     /// ```
-    fn bound_north(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_y(by as i64)
+    fn move_north(&mut self, by: u64) -> Result<(), Error> {
+        self.move_y(by as i64)
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を南方向に動かします。
@@ -564,7 +565,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_y(), 10);
     ///
-    /// let _ = id.bound_south(4).unwrap();
+    /// let _ = id.move_south(4).unwrap();
     /// assert_eq!(id.as_y(), 6);
     /// ```
     ///
@@ -575,10 +576,10 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// # use kasane_logic::error::Error;
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_f(), 6);
-    /// assert_eq!(id.bound_south(50), Err(Error::YOutOfRange { z: 4, y: 0 }));
+    /// assert_eq!(id.move_south(50), Err(Error::YOutOfRange { z: 4, y: 0 }));
     /// ```
-    fn bound_south(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_y(-(by as i64))
+    fn move_south(&mut self, by: u64) -> Result<(), Error> {
+        self.move_y(-(by as i64))
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を東方向に動かします。
@@ -596,7 +597,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_x(), 9);
     ///
-    /// let _ = id.bound_east(4).unwrap();
+    /// let _ = id.move_east(4).unwrap();
     /// assert_eq!(id.as_x(), 13);
     /// ```
     ///
@@ -607,10 +608,10 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// # use kasane_logic::error::Error;
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_x(), 9);
-    /// assert_eq!(id.bound_east(50), Err(Error::XOutOfRange { z: 4, x: 59 }));
+    /// assert_eq!(id.move_east(50), Err(Error::XOutOfRange { z: 4, x: 59 }));
     /// ```
-    fn bound_east(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_x(by as i64)
+    fn move_east(&mut self, by: u64) -> Result<(), Error> {
+        self.move_x(by as i64)
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を西方向に動かします。
@@ -628,7 +629,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_x(), 9);
     ///
-    /// let _ = id.bound_west(4).unwrap();
+    /// let _ = id.move_west(4).unwrap();
     /// assert_eq!(id.as_x(), 5);
     /// ```
     ///
@@ -639,10 +640,10 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// # use kasane_logic::error::Error;
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_x(), 9);
-    /// assert_eq!(id.bound_west(50), Err(Error::XOutOfRange { z: 4, x: 0 }));
+    /// assert_eq!(id.move_west(50), Err(Error::XOutOfRange { z: 4, x: 0 }));
     /// ```
-    fn bound_west(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_x(-(by as i64))
+    fn move_west(&mut self, by: u64) -> Result<(), Error> {
+        self.move_x(-(by as i64))
     }
 
     /// 指定したインデックス差 `by` に基づき、この `SingleID` を垂直上下方向に動かします。
@@ -660,7 +661,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_f(), 6);
     ///
-    /// let _ = id.bound_f(-10).unwrap();
+    /// let _ = id.move_f(-10).unwrap();
     /// assert_eq!(id.as_f(), -4);
     /// ```
     ///
@@ -671,9 +672,9 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// # use kasane_logic::error::Error;
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_f(), 6);
-    /// assert_eq!(id.bound_f(50), Err(Error::FOutOfRange { z: 4, f: 56 }));
+    /// assert_eq!(id.move_f(50), Err(Error::FOutOfRange { z: 4, f: 56 }));
     /// ```
-    fn bound_f(&mut self, by: i64) -> Result<(), Error> {
+    fn move_f(&mut self, by: i64) -> Result<(), Error> {
         let new = self.f.checked_add(by).ok_or(Error::FOutOfRange {
             f: if by >= 0 { i64::MAX } else { i64::MIN },
             z: self.z,
@@ -703,7 +704,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_x(), 9);
     ///
-    /// let _ = id.bound_x(-3).unwrap();
+    /// let _ = id.move_x(-3).unwrap();
     /// assert_eq!(id.as_x(), 6);
     /// ```
     ///
@@ -714,9 +715,9 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// # use kasane_logic::error::Error;
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_x(), 9);
-    /// assert_eq!(id.bound_x(-10), Err(Error::XOutOfRange { z: 4, x: 0 }));
+    /// assert_eq!(id.move_x(-10), Err(Error::XOutOfRange { z: 4, x: 0 }));
     /// ```
-    fn bound_x(&mut self, by: i64) -> Result<(), Error> {
+    fn move_x(&mut self, by: i64) -> Result<(), Error> {
         let new = if by >= 0 {
             self.x.checked_add(by as u64).ok_or(Error::XOutOfRange {
                 x: u64::MAX,
@@ -752,7 +753,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_y(), 10);
     ///
-    /// let _ = id.bound_y(-3).unwrap();
+    /// let _ = id.move_y(-3).unwrap();
     /// assert_eq!(id.as_y(), 7);
     /// ```
     ///
@@ -763,9 +764,9 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// # use kasane_logic::error::Error;
     /// let mut id = SingleID::new(4, 6, 9, 10).unwrap();
     /// assert_eq!(id.as_y(), 10);
-    /// assert_eq!(id.bound_y(-20), Err(Error::YOutOfRange { z: 4, y: 0 }));
+    /// assert_eq!(id.move_y(-20), Err(Error::YOutOfRange { z: 4, y: 0 }));
     /// ```
-    fn bound_y(&mut self, by: i64) -> Result<(), Error> {
+    fn move_y(&mut self, by: i64) -> Result<(), Error> {
         let new = if by >= 0 {
             self.y.checked_add(by as u64).ok_or(Error::YOutOfRange {
                 y: u64::MAX,
@@ -793,7 +794,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// ```
     /// # use kasane_logic::id::space_id::SpaceID;
     /// # use kasane_logic::id::space_id::single::SingleID;
-    /// # use kasane_logic::geometry::point::coordinate::Coordinate;
+    /// # use kasane_logic::geometry::coordinate::Coordinate;
     /// let id = SingleID::new(4, 6, 9, 14).unwrap();
     /// let center: Coordinate = id.center();
     /// println!("{:?}", center);
@@ -814,7 +815,7 @@ impl crate::id::space_id::SpaceID for SingleID {
     /// ```
     /// # use kasane_logic::id::space_id::SpaceID;
     /// # use kasane_logic::id::space_id::single::SingleID;
-    /// # use kasane_logic::geometry::point::coordinate::Coordinate;
+    /// # use kasane_logic::geometry::coordinate::Coordinate;
     /// let id = SingleID::new(4, 6, 9, 14).unwrap();
     /// let vertices: [Coordinate; 8] = id.vertices();
     /// println!("{:?}", vertices);

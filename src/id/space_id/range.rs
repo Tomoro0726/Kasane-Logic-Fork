@@ -61,15 +61,6 @@ impl fmt::Display for RangeID {
     /// let s = format!("{}", id);
     ///  assert_eq!(s, "4/-3/8:9/5:10");;
     /// ```
-    ///
-    /// 反転範囲の表現（Xインデックス）
-    /// ```
-    /// # use kasane_logic::id::space_id::range::RangeID;
-    /// # use std::fmt::Write;
-    /// let id = RangeID::new(4, [-3,-3], [9,1], [5,10]).unwrap();
-    /// let s = format!("{}", id);
-    ///  assert_eq!(s, "4/-3/9:1/5:10");;
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -397,31 +388,31 @@ impl SpaceID for RangeID {
         XY_MAX[self.z as usize]
     }
 
-    fn bound_up(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_f(by as i64)
+    fn move_up(&mut self, by: u64) -> Result<(), Error> {
+        self.move_f(by as i64)
     }
 
-    fn bound_down(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_f(-(by as i64))
+    fn move_down(&mut self, by: u64) -> Result<(), Error> {
+        self.move_f(-(by as i64))
     }
 
-    fn bound_north(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_x(by as i64)
+    fn move_north(&mut self, by: u64) -> Result<(), Error> {
+        self.move_x(by as i64)
     }
 
-    fn bound_south(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_x(-(by as i64))
+    fn move_south(&mut self, by: u64) -> Result<(), Error> {
+        self.move_x(-(by as i64))
     }
 
-    fn bound_east(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_y(by as i64)
+    fn move_east(&mut self, by: u64) -> Result<(), Error> {
+        self.move_y(by as i64)
     }
 
-    fn bound_west(&mut self, by: u64) -> Result<(), Error> {
-        self.bound_y(-(by as i64))
+    fn move_west(&mut self, by: u64) -> Result<(), Error> {
+        self.move_y(-(by as i64))
     }
 
-    fn bound_f(&mut self, by: i64) -> Result<(), Error> {
+    fn move_f(&mut self, by: i64) -> Result<(), Error> {
         let min = self.min_f();
         let max = self.max_f();
         let z = self.z;
@@ -444,7 +435,7 @@ impl SpaceID for RangeID {
         Ok(())
     }
 
-    fn bound_x(&mut self, by: i64) -> Result<(), Error> {
+    fn move_x(&mut self, by: i64) -> Result<(), Error> {
         if by >= 0 {
             let byu = by as u64;
             let max = self.max_xy();
@@ -490,7 +481,7 @@ impl SpaceID for RangeID {
         }
     }
 
-    fn bound_y(&mut self, by: i64) -> Result<(), Error> {
+    fn move_y(&mut self, by: i64) -> Result<(), Error> {
         if by >= 0 {
             let byu = by as u64;
             let max = self.max_xy();
