@@ -16,12 +16,9 @@ use crate::{
     },
 };
 
-/// RangeIDは拡張された空間 ID を表す型です。各インデックスを範囲で指定することができます。 各次元の範囲には順序が意味を持ち、通常は `[α, β]` の形で `α <= β` を想定します。ただし `α >= β` の場合は区間が反転し、空間の循環方向を表します。例えば Xインデックス ではWEB メルカトル法に基づく経度の循環性のため、これは実空間上の連続性と一致します。
+/// RangeIDは拡張された空間 ID を表す型です。
 ///
-/// 一方 Yインデックス は WEB メルカトル法の制約（高緯度の非対応）により、反転区間は必ずしも実空間上の連続性を意味しません。Fインデックス については XYインデックス との対称性を考慮し境界循環を定義していますが、`α >= β` の場合は実空間的な連続性を保証しません。
-///
-/// 内部的には下記のような構造体で構成されており、各フィールドをプライベートにすることで、
-/// ズームレベルに依存するインデックス範囲やその他のバリデーションを適切に適用することができます。
+/// 各インデックスを範囲で指定することができます。各次元の範囲を表す配列の順序には意味を持ちません。内部的には下記のような構造体で構成されており、各フィールドをプライベートにすることで、ズームレベルに依存するインデックス範囲やその他のバリデーションを適切に適用することができます。
 ///
 /// この型は `PartialOrd` / `Ord` を実装していますが、これは主に`BTreeSet` や `BTreeMap` などの順序付きコレクションでの格納・探索用です。実際の空間的な「大小」を意味するものではありません。
 ///
@@ -95,7 +92,12 @@ fn format_dimension<T: PartialEq + fmt::Display>(dimension: [T; 2]) -> String {
 }
 
 impl RangeID {
-    /// 指定された値から [`RangeID`] を構築します。このコンストラクタは、与えられた `z`, `f1`, `f2`, `x1`, `x2`, `y1`, `y2` が  各ズームレベルにおける範囲内にあるかを検証し、範囲外の場合は [`Error`] を返します。
+    /// 指定された値から [`RangeID`] を構築します。
+    /// 与えられた `z`, `f1`, `f2`, `x1`, `x2`, `y1`, `y2` が  各ズームレベルにおける範囲内にあるかを検証し、範囲外の場合は [`Error`] を返します。
+    ///
+    ///　**各次元の与えられた2つの値は自動的に昇順に並び替えられ、**
+    /// **常に `[min, max]` の形で内部に保持されます。**
+    ///
     ///
     /// # パラメータ
     /// * `z` — ズームレベル（0–63の範囲が有効）  
@@ -138,8 +140,8 @@ impl RangeID {
     /// let id = RangeID::new(68, [-3,29], [8,9], [5,10]);
     /// assert_eq!(id, Err(Error::ZOutOfRange { z:68 }));
     /// ```
-    pub fn new(z: u8, f: [i64; 2], x: [u64; 2], y: [u64; 2]) -> Result<RangeID, Error> {
-        if z > 63u8 {
+    pub fn new(z: u8, mut f: [i64; 2], mut x: [u64; 2], mut y: [u64; 2]) -> Result<RangeID, Error> {
+        if z > 63 {
             return Err(Error::ZOutOfRange { z });
         }
 
@@ -147,25 +149,26 @@ impl RangeID {
         let f_max = F_MAX[z as usize];
         let xy_max = XY_MAX[z as usize];
 
-        if f[0] < f_min || f[0] > f_max {
-            return Err(Error::FOutOfRange { f: f[0], z });
-        }
-        if f[1] < f_min || f[1] > f_max {
-            return Err(Error::FOutOfRange { f: f[1], z });
-        }
-
-        if x[0] > xy_max {
-            return Err(Error::XOutOfRange { x: x[0], z });
-        }
-        if x[1] > xy_max {
-            return Err(Error::XOutOfRange { x: x[1], z });
+        for i in 0..2 {
+            if f[i] < f_min || f[i] > f_max {
+                return Err(Error::FOutOfRange { f: f[i], z });
+            }
+            if x[i] > xy_max {
+                return Err(Error::XOutOfRange { x: x[i], z });
+            }
+            if y[i] > xy_max {
+                return Err(Error::YOutOfRange { y: y[i], z });
+            }
         }
 
-        if y[0] > xy_max {
-            return Err(Error::YOutOfRange { y: y[0], z });
+        if f[0] > f[1] {
+            f.swap(0, 1);
         }
-        if y[1] > xy_max {
-            return Err(Error::YOutOfRange { y: y[1], z });
+        if x[0] > x[1] {
+            x.swap(0, 1);
+        }
+        if y[0] > y[1] {
+            y.swap(0, 1);
         }
 
         Ok(RangeID { z, f, x, y })
@@ -531,72 +534,6 @@ impl SpaceID for RangeID {
 
             self.y = [ns, ne];
             Ok(())
-        }
-    }
-
-    fn wrap_up(&mut self, by: u64) {
-        self.wrap_f(by as i64);
-    }
-
-    fn wrap_down(&mut self, by: u64) {
-        self.wrap_f(-(by as i64));
-    }
-
-    fn wrap_north(&mut self, by: u64) {
-        self.wrap_y(by as i64);
-    }
-
-    fn wrap_south(&mut self, by: u64) {
-        self.wrap_y(-(by as i64));
-    }
-
-    fn wrap_east(&mut self, by: u64) {
-        self.wrap_x(by as i64);
-    }
-
-    fn wrap_west(&mut self, by: u64) {
-        self.wrap_x(-(by as i64));
-    }
-
-    fn wrap_f(&mut self, by: i64) {
-        let min = self.min_f();
-        let max = self.max_f();
-        let width = (max - min + 1) as i128;
-
-        for v in &mut self.f {
-            let offset = (*v - min) as i128;
-            let new = ((offset + (by as i128)) % width + width) % width;
-            *v = (min as i128 + new) as i64;
-        }
-    }
-
-    fn wrap_x(&mut self, by: i64) {
-        let max = self.max_xy();
-        let ring = max + 1;
-
-        let shift = if by >= 0 {
-            (by as u64) % ring
-        } else {
-            (ring - ((-by as u64) % ring)) % ring
-        };
-
-        for v in &mut self.x {
-            *v = (*v + shift) % ring;
-        }
-    }
-
-    fn wrap_y(&mut self, by: i64) {
-        let max = self.max_xy();
-        let ring = max + 1;
-
-        let shift = if by >= 0 {
-            (by as u64) % ring
-        } else {
-            (ring - ((-by as u64) % ring)) % ring
-        };
-
-        for v in &mut self.y {
-            *v = (*v + shift) % ring;
         }
     }
 
